@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estoque - Sistema de Gestão</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <style>
+        .estoque-table {
+            width: 90%;
+            max-width: 1200px;
+            margin: 1rem auto;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .estoque-table th,
+        .estoque-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .estoque-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #ff4500;
+            font-size: 1rem;
+        }
+        .estoque-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .estoque-zerado {
+            background-color: #ffebee !important;
+            color: #c62828;
+        }
+        .estoque-zerado:hover {
+            background-color: #ffcdd2 !important;
+        }
+        .aviso-estoque {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 0 auto 1rem auto;
+            width: 90%;
+            max-width: 1200px;
+            text-align: center;
+            display: none;
+        }
+        .btn-acao {
+            padding: 0.3rem 0.6rem;
+            margin: 0.1rem;
+            font-size: 0.8rem;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .btn-repor {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-editar {
+            background-color: #007bff;
+            color: white;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: black;
+        }
+        .filtros {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 0 auto 1rem auto;
+            width: 90%;
+            max-width: 1200px;
+            text-align: center;
+        }
+        .filtros input, .filtros select {
+            margin-right: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media print {
+            .header, .sidebar, .filtros, .no-print {
+                display: none !important;
+            }
+            
+            .main-content {
+                margin: 0 !important;
+                padding: 20px !important;
+            }
+            
+            .estoque-table {
+                width: 100% !important;
+                font-size: 12px !important;
+                box-shadow: none !important;
+            }
+            
+            .estoque-table th,
+            .estoque-table td {
+                padding: 8px 4px !important;
+                border: 1px solid #000 !important;
+            }
+            
+            .estoque-table th {
+                background-color: #f0f0f0 !important;
+                font-weight: bold !important;
+            }
+            
+            h2 {
+                text-align: center;
+                margin-bottom: 20px;
+                font-size: 18px;
+            }
+            
+            #totalPecas {
+                text-align: center;
+                margin-bottom: 15px;
+                font-size: 14px;
+            }
+            
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="../assets/images/Move Up.png" alt="Move Up Fit">
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Início</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Cadastro</a>
+                    <ul class="submenu">
+                        <li><a href="cadastro-marca.html">Fornecedor</a></li>
+                        <li><a href="cadastro-maquinas.html">Máquina de Cartão</a></li>
+                        <li><a href="cadastro-pix.html">PIX</a></li>
+                        <li><a href="cadastro-pecas.html">Peças</a></li>
+                    </ul>
+                </li>
+                <li><a href="estoque.html">Estoque</a></li>
+                <li id="menuUsuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Relatórios</a>
+                    <ul class="submenu">
+                        <li><a href="relatorio-financeiro.html">Financeiro</a></li>
+                        <li><a href="relatorio-vendas.html">Vendas</a></li>
+                        <li><a href="relatorio-analitico.html">Analítico</a></li>
+                    </ul>
+                </li>
+                <li><a href="vendas.html">Vendas</a></li>
+                <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <main class="main-content" style="margin-top: 150px;">
+        <h1 style="text-align: center; color: #ff4500; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 2.5rem; font-weight: 300; margin-bottom: 2rem;">Estoque</h1>
+        
+        <div class="filtros">
+            <input type="text" id="filtroNome" placeholder="Filtrar por nome..." onkeyup="filtrarPecas()">
+            <select id="filtroMarca" onchange="filtrarPecas()">
+                <option value="">Todas as marcas</option>
+            </select>
+            <select id="filtroCategoria" onchange="filtrarPecas()">
+                <option value="">Todas as categorias</option>
+                <option value="camiseta">Camiseta</option>
+                <option value="calca">Calça</option>
+                <option value="vestido">Vestido</option>
+                <option value="saia">Saia</option>
+                <option value="blusa">Blusa</option>
+                <option value="jaqueta">Jaqueta</option>
+                <option value="shorts">Shorts</option>
+            </select>
+            <button class="btn" onclick="carregarPecas()">Atualizar</button>
+            <button class="btn btn-secondary" onclick="imprimirRelatorio()" style="background-color: #28a745;">Imprimir</button>
+        </div>
+
+        <div id="avisoEstoque" class="aviso-estoque">
+            <strong>⚠️ Atenção:</strong> <span id="textoAviso"></span>
+        </div>
+        
+        <div id="totalPecas" style="margin: 0 auto 1rem auto; font-weight: bold; text-align: center; width: 90%; max-width: 1200px;"></div>
+
+        <table class="estoque-table" id="tabelaEstoque">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Nome</th>
+                    <th>Categoria</th>
+                    <th>Marca</th>
+                    <th>Preço Venda</th>
+                    <th>Estoque</th>
+                    <th class="no-print">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela">
+                <tr>
+                    <td colspan="7" style="text-align: center;">Carregando...</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <!-- Modal de Edição -->
+        <div id="modalEdicao" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="fecharModal()">&times;</span>
+                <h3>Editar Peça</h3>
+                <form id="formEdicao">
+                    <input type="hidden" id="editId">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editCodigo">Código:</label>
+                            <input type="text" id="editCodigo" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editNome">Nome:</label>
+                            <input type="text" id="editNome" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editCategoria">Categoria:</label>
+                            <select id="editCategoria" required>
+                                <option value="camiseta">Camiseta</option>
+                                <option value="calca">Calça</option>
+                                <option value="vestido">Vestido</option>
+                                <option value="saia">Saia</option>
+                                <option value="blusa">Blusa</option>
+                                <option value="jaqueta">Jaqueta</option>
+                                <option value="shorts">Shorts</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editMarca">Marca:</label>
+                            <select id="editMarca" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editCor">Cor:</label>
+                            <input type="text" id="editCor" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editTamanho">Tamanho:</label>
+                            <select id="editTamanho" required>
+                                <option value="PP">PP</option>
+                                <option value="P">P</option>
+                                <option value="M">M</option>
+                                <option value="G">G</option>
+                                <option value="GG">GG</option>
+                                <option value="XG">XG</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editPrecoFornecedor">Preço Fornecedor (R$):</label>
+                            <input type="number" id="editPrecoFornecedor" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPreco">Preço Venda (R$):</label>
+                            <input type="number" id="editPreco" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editEstoque">Estoque:</label>
+                            <input type="number" id="editEstoque" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editObservacoes">Observações:</label>
+                            <textarea id="editObservacoes" rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <button type="submit" class="btn">Salvar Alterações</button>
+                        <button type="button" class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script>
+        let todasPecas = [];
+
+        // Verificar autenticação
+        firebase.auth().onAuthStateChanged(async function(user) {
+            if (!user) {
+                window.location.href = '../login.html';
+            } else {
+                const nivel = await FirebaseDatabase.obterNivelUsuario(user.uid);
+                if (nivel === 'master') {
+                    document.getElementById('menuUsuarios').style.display = 'block';
+                }
+                carregarPecas();
+                carregarMarcasFiltro();
+            }
+        });
+
+        // Função de logout
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '../login.html';
+            });
+        }
+
+        async function carregarPecas() {
+            try {
+                todasPecas = await FirebaseDatabase.obterPecas();
+                exibirPecas(todasPecas);
+            } catch (error) {
+                console.error('Erro ao carregar peças:', error);
+                document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="7" style="text-align: center;">Erro ao carregar dados</td></tr>';
+            }
+        }
+
+        async function carregarMarcasFiltro() {
+            try {
+                const marcas = await FirebaseDatabase.obterMarcas();
+                const select = document.getElementById('filtroMarca');
+                
+                marcas.forEach(marca => {
+                    const option = document.createElement('option');
+                    option.value = marca.nomeMarca;
+                    option.text = marca.nomeMarca;
+                    select.add(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar marcas:', error);
+            }
+        }
+
+        function exibirPecas(pecas) {
+            const tbody = document.getElementById('corpoTabela');
+            const totalDiv = document.getElementById('totalPecas');
+            const avisoDiv = document.getElementById('avisoEstoque');
+            const textoAviso = document.getElementById('textoAviso');
+            
+            if (pecas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Nenhuma peça encontrada</td></tr>';
+                totalDiv.textContent = 'Total: 0 peças';
+                avisoDiv.style.display = 'none';
+                return;
+            }
+
+            // Verificar peças com estoque zerado
+            const pecasZeradas = pecas.filter(peca => peca.estoque === 0);
+            
+            tbody.innerHTML = pecas.map(peca => `
+                <tr class="${peca.estoque === 0 ? 'estoque-zerado' : ''}">
+                    <td>${peca.codigo}</td>
+                    <td>${peca.nome}</td>
+                    <td>${peca.categoria}</td>
+                    <td>${peca.marca}</td>
+                    <td>R$ ${peca.preco ? peca.preco.toFixed(2) : '0.00'}</td>
+                    <td>${peca.estoque === 0 ? '<strong>ESGOTADO</strong>' : peca.estoque}</td>
+                    <td class="no-print">
+                        <button class="btn-acao btn-repor" onclick="reporEstoque('${peca.id}', '${peca.nome}')">Repor</button>
+                        <button class="btn-acao btn-editar" onclick="editarPeca('${peca.id}')">Editar</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            const totalEstoque = pecas.reduce((total, peca) => total + (peca.estoque || 0), 0);
+            totalDiv.textContent = `Total: ${pecas.length} peças | Estoque total: ${totalEstoque} unidades`;
+            
+            // Mostrar aviso se houver peças zeradas
+            if (pecasZeradas.length > 0) {
+                textoAviso.textContent = `${pecasZeradas.length} peça(s) com estoque esgotado. Verifique as linhas destacadas em vermelho.`;
+                avisoDiv.style.display = 'block';
+            } else {
+                avisoDiv.style.display = 'none';
+            }
+        }
+
+        function filtrarPecas() {
+            const filtroNome = document.getElementById('filtroNome').value.toLowerCase();
+            const filtroMarca = document.getElementById('filtroMarca').value;
+            const filtroCategoria = document.getElementById('filtroCategoria').value;
+
+            const pecasFiltradas = todasPecas.filter(peca => {
+                const nomeMatch = peca.nome.toLowerCase().includes(filtroNome);
+                const marcaMatch = !filtroMarca || peca.marca === filtroMarca;
+                const categoriaMatch = !filtroCategoria || peca.categoria === filtroCategoria;
+                
+                return nomeMatch && marcaMatch && categoriaMatch;
+            });
+
+            exibirPecas(pecasFiltradas);
+        }
+
+        function imprimirRelatorio() {
+            // Adicionar data e hora no relatório
+            const agora = new Date();
+            const dataHora = agora.toLocaleString('pt-BR');
+            
+            // Criar elemento temporário com data
+            const dataElement = document.createElement('div');
+            dataElement.id = 'dataImpressao';
+            dataElement.innerHTML = `<p style="text-align: right; font-size: 12px; margin-bottom: 10px;">Gerado em: ${dataHora}</p>`;
+            
+            // Inserir antes da tabela
+            const tabela = document.getElementById('tabelaEstoque');
+            tabela.parentNode.insertBefore(dataElement, tabela);
+            
+            // Imprimir
+            window.print();
+            
+            // Remover elemento temporário após impressão
+            setTimeout(() => {
+                if (document.getElementById('dataImpressao')) {
+                    document.getElementById('dataImpressao').remove();
+                }
+            }, 1000);
+        }
+
+        function reporEstoque(pecaId, nomePeca) {
+            const quantidade = prompt(`Quantas unidades deseja adicionar ao estoque de "${nomePeca}"?`);
+            if (quantidade && !isNaN(quantidade) && parseInt(quantidade) > 0) {
+                const peca = todasPecas.find(p => p.id === pecaId);
+                if (peca) {
+                    const novoEstoque = peca.estoque + parseInt(quantidade);
+                    atualizarEstoquePeca(pecaId, novoEstoque);
+                }
+            }
+        }
+
+        async function atualizarEstoquePeca(pecaId, novoEstoque) {
+            try {
+                await FirebaseDatabase.atualizarEstoque(pecaId, novoEstoque);
+                alert('Estoque atualizado com sucesso!');
+                carregarPecas();
+            } catch (error) {
+                console.error('Erro ao atualizar estoque:', error);
+                alert('Erro ao atualizar estoque.');
+            }
+        }
+
+        async function editarPeca(pecaId) {
+            const peca = todasPecas.find(p => p.id === pecaId);
+            if (!peca) return;
+
+            // Carregar marcas no select
+            await carregarMarcasModal();
+
+            // Preencher formulário
+            document.getElementById('editId').value = peca.id;
+            document.getElementById('editCodigo').value = peca.codigo;
+            document.getElementById('editNome').value = peca.nome;
+            document.getElementById('editCategoria').value = peca.categoria;
+            document.getElementById('editMarca').value = peca.marca;
+            document.getElementById('editCor').value = peca.cor;
+            document.getElementById('editTamanho').value = peca.tamanho;
+            document.getElementById('editPrecoFornecedor').value = peca.precoFornecedor || 0;
+            document.getElementById('editPreco').value = peca.preco;
+            document.getElementById('editEstoque').value = peca.estoque;
+            document.getElementById('editObservacoes').value = peca.observacoes || '';
+
+            // Mostrar modal
+            document.getElementById('modalEdicao').style.display = 'block';
+        }
+
+        async function carregarMarcasModal() {
+            try {
+                const marcas = await FirebaseDatabase.obterMarcas();
+                const select = document.getElementById('editMarca');
+                select.innerHTML = '<option value="">Selecione...</option>';
+                
+                marcas.forEach(marca => {
+                    const option = document.createElement('option');
+                    option.value = marca.nomeMarca;
+                    option.text = marca.nomeMarca;
+                    select.add(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar marcas:', error);
+            }
+        }
+
+        function fecharModal() {
+            document.getElementById('modalEdicao').style.display = 'none';
+        }
+
+        // Fechar modal ao clicar fora
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalEdicao');
+            if (event.target === modal) {
+                fecharModal();
+            }
+        }
+
+        // Submissão do formulário de edição
+        document.getElementById('formEdicao').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const pecaId = document.getElementById('editId').value;
+            const dadosAtualizados = {
+                codigo: document.getElementById('editCodigo').value,
+                nome: document.getElementById('editNome').value,
+                categoria: document.getElementById('editCategoria').value,
+                marca: document.getElementById('editMarca').value,
+                cor: document.getElementById('editCor').value,
+                tamanho: document.getElementById('editTamanho').value,
+                precoFornecedor: parseFloat(document.getElementById('editPrecoFornecedor').value),
+                preco: parseFloat(document.getElementById('editPreco').value),
+                estoque: parseInt(document.getElementById('editEstoque').value),
+                observacoes: document.getElementById('editObservacoes').value
+            };
+
+            try {
+                await FirebaseDatabase.atualizarPeca(pecaId, dadosAtualizados);
+                alert('Peça atualizada com sucesso!');
+                fecharModal();
+                carregarPecas();
+            } catch (error) {
+                console.error('Erro ao atualizar peça:', error);
+                alert('Erro ao atualizar peça.');
+            }
+        });
+    </script>
+</body>
+</html>

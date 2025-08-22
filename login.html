@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Move Up Fit</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <style>
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+        }
+        .login-form {
+            background: white;
+            padding: 3rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+        .logo-login {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .logo-login img {
+            height: 80px;
+            max-width: 300px;
+        }
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-form">
+            <div class="logo-login">
+                <img src="assets/images/Move Up.png" alt="Move Up Fit">
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Senha:</label>
+                    <input type="password" id="password" name="password" required minlength="6">
+                </div>
+
+                <div class="error-message" id="errorMessage"></div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn" style="width: 100%;">Entrar</button>
+                </div>
+
+
+            </form>
+
+
+        </div>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script>
+        function mostrarErro(elementId, mensagem) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = mensagem;
+            errorElement.style.display = 'block';
+        }
+
+        function limparErros() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            limparErros();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                this.classList.add('loading');
+                await firebase.auth().signInWithEmailAndPassword(email, password);
+                window.location.href = 'index.html';
+            } catch (error) {
+                mostrarErro('errorMessage', 'Email ou senha incorretos');
+            } finally {
+                this.classList.remove('loading');
+            }
+        });
+
+        // Verificar se já está logado
+        firebase.auth().onAuthStateChanged(async function(user) {
+            if (user) {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>

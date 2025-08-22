@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Máquinas - Sistema de Gestão</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="../assets/images/Move Up.png" alt="Move Up Fit">
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Início</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Cadastro</a>
+                    <ul class="submenu">
+                        <li><a href="cadastro-marca.html">Fornecedor</a></li>
+                        <li><a href="cadastro-maquinas.html">Máquina de Cartão</a></li>
+                        <li><a href="cadastro-pecas.html">Peças</a></li>
+                    </ul>
+                </li>
+                <li><a href="estoque.html">Estoque</a></li>
+                <li id="menuUsuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Relatórios</a>
+                    <ul class="submenu">
+                        <li><a href="relatorio-financeiro.html">Financeiro</a></li>
+                        <li><a href="relatorio-vendas.html">Vendas</a></li>
+                    </ul>
+                </li>
+                <li><a href="vendas.html">Vendas</a></li>
+                <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <main class="main-content">
+        <div class="form-container" style="margin: 0 auto;">
+            <h1 style="text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #ff4500; font-weight: 300; font-size: 2.5rem; margin-bottom: 2rem;">Máquina de Cartão</h1>
+            
+            <form id="cadastroMaquina">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nome">Nome da Máquina:</label>
+                        <input type="text" id="nome" name="nome" required placeholder="Ex: Stone, Mercado Pago">
+                    </div>
+                    <div class="form-group">
+                        <label for="codigo">Código:</label>
+                        <input type="text" id="codigo" name="codigo" required placeholder="Ex: stone, mercadopago">
+                    </div>
+                </div>
+
+                <h4 style="color: #ff4500; margin-top: 1.5rem;">Taxas por Bandeira</h4>
+                <div id="bandeirasTaxas">
+                    <!-- Visa -->
+                    <div style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 4px;">
+                        <h5 style="color: #007bff; margin-bottom: 1rem;">Visa</h5>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Débito (%):</label>
+                                <input type="number" id="visaDebito" step="0.01" min="0" required placeholder="3.50" style="width: 80px;">
+                            </div>
+                            <div class="form-group">
+                                <label>1x (%):</label>
+                                <input type="number" id="visa1x" step="0.01" min="0" required placeholder="3.50" style="width: 80px;">
+                            </div>
+                            <div class="form-group">
+                                <label>2x (%):</label>
+                                <input type="number" id="visa2x" step="0.01" min="0" required placeholder="4.20" style="width: 80px;">
+                            </div>
+                            <div class="form-group">
+                                <label>3x (%):</label>
+                                <input type="number" id="visa3x" step="0.01" min="0" required placeholder="4.50" style="width: 80px;">
+                            </div>
+                            <div class="form-group">
+                                <label>4x (%):</label>
+                                <input type="number" id="visa4x" step="0.01" min="0" required placeholder="4.80" style="width: 80px;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mastercard -->
+                    <div style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 4px;">
+                        <h5 style="color: #ff5722; margin-bottom: 1rem;">Mastercard</h5>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Débito (%):</label>
+                                <input type="number" id="mastercardDebito" step="0.01" min="0" required placeholder="3.50" style="width: 80px;">
+                            </div>
+                            <div class="form-group">
+                                <label>1x (%):</label>
+                                <input type="number" id="mastercard1x" step="0.01" min="0" required placeholder="3.50" style="width: 80px;">
+                            </div>
+                            <div class="form-group">
+                                <label>2x (%):</label>
+                                <input type="number" id="mastercard2x" step="0.01" min="0" required placeholder="4.20" style="width: 80px;">
+                            </div>
+                            <div class="form-group">
+                                <label>3x (%):</label>
+                                <input type="number" id="mastercard3x" step="0.01" min="0" required placeholder="4.50" style="width: 80px;">
+                            </div>
+                            <div class="form-group">
+                                <label>4x (%):</label>
+                                <input type="number" id="mastercard4x" step="0.01" min="0" required placeholder="4.80" style="width: 80px;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Elo -->
+                    <div style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 4px;">
+                        <h5 style="color: #000; margin-bottom: 1rem;">Elo</h5>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Débito (%):</label>
+                                <input type="number" id="eloDebito" step="0.01" min="0" required placeholder="3.50" style="width: 80px;">
+                            </div>
+                            <div class="form-group">
+                                <label>1x (%):</label>
+                                <input type="number" id="elo1x" step="0.01" min="0" required placeholder="3.50" style="width: 80px;">
+                            </div>
+                            <div class="form-group">
+                                <label>2x (%):</label>
+                                <input type="number" id="elo2x" step="0.01" min="0" required placeholder="4.20" style="width: 80px;">
+                            </div>
+                            <div class="form-group">
+                                <label>3x (%):</label>
+                                <input type="number" id="elo3x" step="0.01" min="0" required placeholder="4.50" style="width: 80px;">
+                            </div>
+                            <div class="form-group">
+                                <label>4x (%):</label>
+                                <input type="number" id="elo4x" step="0.01" min="0" required placeholder="4.80" style="width: 80px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="form-group">
+                    <button type="submit" class="btn">Cadastrar Máquina</button>
+                    <button type="reset" class="btn btn-secondary">Limpar</button>
+                    <button type="button" class="btn btn-secondary" onclick="cancelarEdicao()" id="btnCancelar" style="display: none;">Cancelar</button>
+                </div>
+            </form>
+
+            <div style="margin-top: 2rem; border-top: 1px solid #ddd; padding-top: 2rem;">
+                <button class="btn btn-secondary" onclick="toggleListaMaquinas()">Ver Máquinas Cadastradas</button>
+                
+                <div id="listaMaquinas" style="display: none; margin-top: 1rem;">
+                    <h3>Máquinas Cadastradas</h3>
+                    <div id="maquinasContainer"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/firebase-config.js?v=7"></script>
+    <script>
+        let editandoMaquina = null;
+
+        // Verificar autenticação
+        firebase.auth().onAuthStateChanged(async function(user) {
+            if (!user) {
+                window.location.href = '../login.html';
+            } else {
+                const nivel = await FirebaseDatabase.obterNivelUsuario(user.uid);
+                if (nivel === 'master') {
+                    document.getElementById('menuUsuarios').style.display = 'block';
+                }
+            }
+        });
+
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '../login.html';
+            });
+        }
+
+        function toggleListaMaquinas() {
+            const lista = document.getElementById('listaMaquinas');
+            if (lista.style.display === 'none') {
+                lista.style.display = 'block';
+                carregarMaquinas();
+            } else {
+                lista.style.display = 'none';
+            }
+        }
+
+        async function carregarMaquinas() {
+            try {
+                const maquinas = await FirebaseDatabase.obterMaquinas();
+                const container = document.getElementById('maquinasContainer');
+                
+                if (maquinas.length === 0) {
+                    container.innerHTML = '<p>Nenhuma máquina cadastrada.</p>';
+                    return;
+                }
+                
+                container.innerHTML = maquinas.map(maquina => `
+                    <div style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 4px;">
+                        <strong>Máquina:</strong> ${maquina.nome}<br>
+                        <strong>Código:</strong> ${maquina.codigo}<br>
+
+                        <strong>Bandeiras:</strong><br>
+                        <small style="margin-left: 1rem;">
+                            <strong>Visa:</strong> D: ${maquina.bandeiras?.visa?.debito || 0}%, 1x: ${maquina.bandeiras?.visa?.['1x'] || 0}%, 2x: ${maquina.bandeiras?.visa?.['2x'] || 0}%<br>
+                            <strong>Master:</strong> D: ${maquina.bandeiras?.mastercard?.debito || 0}%, 1x: ${maquina.bandeiras?.mastercard?.['1x'] || 0}%, 2x: ${maquina.bandeiras?.mastercard?.['2x'] || 0}%<br>
+                            <strong>Elo:</strong> D: ${maquina.bandeiras?.elo?.debito || 0}%, 1x: ${maquina.bandeiras?.elo?.['1x'] || 0}%, 2x: ${maquina.bandeiras?.elo?.['2x'] || 0}%
+                        </small><br>
+
+                        <div style="margin-top: 0.5rem;">
+                            <button class="btn" style="padding: 0.3rem 0.8rem; margin-right: 0.5rem;" onclick="editarMaquina('${maquina.id}', '${maquina.nome}', '${maquina.codigo}', ${JSON.stringify(maquina.bandeiras || {}).replace(/"/g, '&quot;')}, '${maquina.observacoes || ''}')">Editar</button>
+                            <button class="btn btn-secondary" style="padding: 0.3rem 0.8rem; background-color: #e74c3c;" onclick="excluirMaquina('${maquina.id}', '${maquina.nome}')">Excluir</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Erro ao carregar máquinas:', error);
+            }
+        }
+
+        function editarMaquina(id, nome, codigo, bandeirasStr, observacoes) {
+            document.getElementById('nome').value = nome;
+            document.getElementById('codigo').value = codigo;
+            
+            // Parse das bandeiras
+            let bandeiras = {};
+            try {
+                bandeiras = typeof bandeirasStr === 'string' ? JSON.parse(bandeirasStr.replace(/&quot;/g, '"')) : bandeirasStr;
+            } catch (e) {
+                console.error('Erro ao fazer parse das bandeiras:', e);
+                bandeiras = {};
+            }
+            
+            // Carregar taxas das bandeiras
+            const bandeirasList = ['visa', 'mastercard', 'elo'];
+            bandeirasList.forEach(bandeira => {
+                const taxasBandeira = bandeiras && bandeiras[bandeira] ? bandeiras[bandeira] : {};
+                document.getElementById(`${bandeira}Debito`).value = taxasBandeira.debito || 0;
+                document.getElementById(`${bandeira}1x`).value = taxasBandeira['1x'] || 0;
+                document.getElementById(`${bandeira}2x`).value = taxasBandeira['2x'] || 0;
+                document.getElementById(`${bandeira}3x`).value = taxasBandeira['3x'] || 0;
+                document.getElementById(`${bandeira}4x`).value = taxasBandeira['4x'] || 0;
+            });
+            
+
+            
+            document.querySelector('h1').textContent = 'Editar Máquina';
+            document.querySelector('button[type="submit"]').textContent = 'Atualizar Máquina';
+            document.getElementById('btnCancelar').style.display = 'inline-block';
+            
+            editandoMaquina = id;
+            window.scrollTo(0, 0);
+        }
+        
+        function cancelarEdicao() {
+            document.querySelector('h1').textContent = 'Máquina de Cartão';
+            document.querySelector('button[type="submit"]').textContent = 'Cadastrar Máquina';
+            document.getElementById('btnCancelar').style.display = 'none';
+            document.getElementById('cadastroMaquina').reset();
+            editandoMaquina = null;
+        }
+
+        async function excluirMaquina(id, nome) {
+            if (confirm(`Tem certeza que deseja excluir a máquina "${nome}"?`)) {
+                try {
+                    await FirebaseDatabase.excluirMaquina(id);
+                    alert('Máquina excluída com sucesso!');
+                    carregarMaquinas();
+                } catch (error) {
+                    alert('Erro ao excluir máquina.');
+                    console.error('Erro:', error);
+                }
+            }
+        }
+
+        document.getElementById('cadastroMaquina').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const maquina = {
+                nome: formData.get('nome'),
+                codigo: formData.get('codigo').toLowerCase(),
+                bandeiras: {
+                    visa: {
+                        debito: parseFloat(document.getElementById('visaDebito').value),
+                        '1x': parseFloat(document.getElementById('visa1x').value),
+                        '2x': parseFloat(document.getElementById('visa2x').value),
+                        '3x': parseFloat(document.getElementById('visa3x').value),
+                        '4x': parseFloat(document.getElementById('visa4x').value)
+                    },
+                    mastercard: {
+                        debito: parseFloat(document.getElementById('mastercardDebito').value),
+                        '1x': parseFloat(document.getElementById('mastercard1x').value),
+                        '2x': parseFloat(document.getElementById('mastercard2x').value),
+                        '3x': parseFloat(document.getElementById('mastercard3x').value),
+                        '4x': parseFloat(document.getElementById('mastercard4x').value)
+                    },
+                    elo: {
+                        debito: parseFloat(document.getElementById('eloDebito').value),
+                        '1x': parseFloat(document.getElementById('elo1x').value),
+                        '2x': parseFloat(document.getElementById('elo2x').value),
+                        '3x': parseFloat(document.getElementById('elo3x').value),
+                        '4x': parseFloat(document.getElementById('elo4x').value)
+                    }
+                },
+
+            };
+            
+            try {
+                if (editandoMaquina) {
+                    await FirebaseDatabase.atualizarMaquina(editandoMaquina, maquina);
+                    alert('Máquina atualizada com sucesso!');
+                    cancelarEdicao();
+                } else {
+                    await FirebaseDatabase.salvarMaquina(maquina);
+                    alert('Máquina cadastrada com sucesso!');
+                    this.reset();
+                }
+                
+                if (document.getElementById('listaMaquinas').style.display === 'block') {
+                    carregarMaquinas();
+                }
+            } catch (error) {
+                alert('Erro ao salvar máquina.');
+                console.error('Erro:', error);
+            }
+        });
+    </script>
+</body>
+</html>

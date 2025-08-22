@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Marca - Sistema de Gestão</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="../assets/images/Move Up.png" alt="Move Up Fit">
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Início</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Cadastro</a>
+                    <ul class="submenu open">
+                        <li><a href="cadastro-marca.html">Fornecedor</a></li>
+                        <li><a href="cadastro-maquinas.html">Máquina de Cartão</a></li>
+                        <li><a href="cadastro-pecas.html">Peças</a></li>
+                    </ul>
+                </li>
+                <li><a href="estoque.html">Estoque</a></li>
+                <li id="menuUsuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Relatórios</a>
+                    <ul class="submenu">
+                        <li><a href="relatorio-financeiro.html">Financeiro</a></li>
+                        <li><a href="relatorio-vendas.html">Vendas</a></li>
+                    </ul>
+                </li>
+                <li><a href="vendas.html">Vendas</a></li>
+                <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <main class="main-content">
+        <div class="form-container" style="margin: 0 auto;">
+            <h1 style="text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #ff4500; font-weight: 300; font-size: 2.5rem; margin-bottom: 2rem;">Fornecedor</h1>
+            
+            <form id="cadastroMarca">
+                <div class="form-group">
+                    <label for="nomeMarca">Nome da Marca:</label>
+                    <input type="text" id="nomeMarca" name="nomeMarca" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="telefone">Telefone:</label>
+                        <input type="tel" id="telefone" name="telefone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contato">Pessoa de Contato:</label>
+                        <input type="text" id="contato" name="contato" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="endereco">Endereço:</label>
+                    <textarea id="endereco" name="endereco" rows="3" placeholder="Endereço completo..." required></textarea>
+                </div>
+
+
+
+                <div class="form-group">
+                    <button type="submit" class="btn">Cadastrar Marca</button>
+                    <button type="reset" class="btn btn-secondary">Limpar</button>
+                    <button type="button" class="btn btn-secondary" onclick="cancelarEdicao()" id="btnCancelar" style="display: none;">Cancelar</button>
+                </div>
+            </form>
+
+            <div style="margin-top: 2rem; border-top: 1px solid #ddd; padding-top: 2rem;">
+                <button class="btn btn-secondary" onclick="toggleListaMarcas()">Ver Marcas Cadastradas</button>
+                
+                <div id="listaMarcas" style="display: none; margin-top: 1rem;">
+                    <h3>Fornecedores Cadastrados</h3>
+                    <div id="marcasContainer"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script>
+        let editandoMarca = null;
+
+        // Verificar autenticação
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (!user) {
+                window.location.href = '../login.html';
+            }
+        });
+
+        // Função de logout
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '../login.html';
+            });
+        }
+
+        // Funções para gerenciar lista de marcas
+        function toggleListaMarcas() {
+            const lista = document.getElementById('listaMarcas');
+            if (lista.style.display === 'none') {
+                lista.style.display = 'block';
+                carregarMarcas();
+            } else {
+                lista.style.display = 'none';
+            }
+        }
+
+        async function carregarMarcas() {
+            try {
+                const marcas = await FirebaseDatabase.obterMarcas();
+                const container = document.getElementById('marcasContainer');
+                
+                if (marcas.length === 0) {
+                    container.innerHTML = '<p>Nenhuma marca cadastrada.</p>';
+                    return;
+                }
+                
+                container.innerHTML = marcas.map(marca => `
+                    <div style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 4px;">
+                        <strong>Marca:</strong> ${marca.nomeMarca}<br>
+                        <strong>Telefone:</strong> ${marca.telefone}<br>
+                        <strong>Contato:</strong> ${marca.contato}<br>
+
+                        <div style="margin-top: 0.5rem;">
+                            <button class="btn" style="padding: 0.3rem 0.8rem; margin-right: 0.5rem;" onclick="editarMarca('${marca.id}', '${marca.nomeMarca}', '${marca.telefone}', '${marca.contato}', '${marca.endereco}', '${marca.cores || ''}')">Editar</button>
+                            <button class="btn btn-secondary" style="padding: 0.3rem 0.8rem; background-color: #e74c3c;" onclick="excluirMarca('${marca.id}', '${marca.nomeMarca}')">Excluir</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Erro ao carregar marcas:', error);
+            }
+        }
+
+        function editarMarca(id, nome, telefone, contato, endereco, cores) {
+            // Puxar dados para o formulário
+            document.getElementById('nomeMarca').value = nome;
+            document.getElementById('telefone').value = telefone;
+            document.getElementById('contato').value = contato;
+            document.getElementById('endereco').value = endereco;
+            
+            // Alterar texto do botão e título
+            document.querySelector('h1').textContent = 'Editar Fornecedor';
+            document.querySelector('button[type="submit"]').textContent = 'Atualizar Fornecedor';
+            
+            // Mostrar botão cancelar
+            document.getElementById('btnCancelar').style.display = 'inline-block';
+            
+            // Armazenar ID da marca sendo editada
+            editandoMarca = id;
+            
+            // Scroll para o topo
+            window.scrollTo(0, 0);
+        }
+        
+        function cancelarEdicao() {
+            document.querySelector('h1').textContent = 'Fornecedor';
+            document.querySelector('button[type="submit"]').textContent = 'Cadastrar Fornecedor';
+            document.getElementById('btnCancelar').style.display = 'none';
+            document.getElementById('cadastroMarca').reset();
+            editandoMarca = null;
+        }
+
+        async function excluirMarca(id, nome) {
+            try {
+                // Verificar se a marca está sendo usada em peças
+                const pecas = await FirebaseDatabase.obterPecas();
+                const marcaEmUso = pecas.some(peca => peca.marca === nome);
+                
+                if (marcaEmUso) {
+                    alert(`Não é possível excluir a marca "${nome}" pois existem peças cadastradas com esta marca.`);
+                    return;
+                }
+                
+                if (confirm(`Tem certeza que deseja excluir a marca "${nome}"?`)) {
+                    await FirebaseDatabase.excluirMarca(id);
+                    alert('Marca excluída com sucesso!');
+                    carregarMarcas();
+                }
+            } catch (error) {
+                alert('Erro ao excluir marca.');
+                console.error('Erro:', error);
+            }
+        }
+
+        // Cadastrar/Editar marca
+        document.getElementById('cadastroMarca').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const marca = {
+                nomeMarca: formData.get('nomeMarca'),
+                telefone: formData.get('telefone'),
+                contato: formData.get('contato'),
+                endereco: formData.get('endereco'),
+                dataCadastro: new Date().toISOString()
+            };
+            
+            try {
+                if (editandoMarca) {
+                    // Modo edição
+                    await FirebaseDatabase.atualizarMarca(editandoMarca, marca);
+                    alert('Marca atualizada com sucesso!');
+                    cancelarEdicao();
+                } else {
+                    // Modo cadastro
+                    await FirebaseDatabase.salvarMarca(marca);
+                    alert('Marca cadastrada com sucesso!');
+                    this.reset();
+                }
+                
+                // Atualizar lista se estiver visível
+                if (document.getElementById('listaMarcas').style.display === 'block') {
+                    carregarMarcas();
+                }
+            } catch (error) {
+                alert('Erro ao salvar marca.');
+                console.error('Erro:', error);
+            }
+        });
+    </script>
+</body>
+</html>

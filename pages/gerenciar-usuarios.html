@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Usuários - Sistema de Gestão</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="../assets/images/Move Up.png" alt="Move Up Fit">
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Início</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Cadastro</a>
+                    <ul class="submenu">
+                        <li><a href="cadastro-marca.html">Fornecedor</a></li>
+                        <li><a href="cadastro-maquinas.html">Máquina de Cartão</a></li>
+                        <li><a href="cadastro-pecas.html">Peças</a></li>
+                    </ul>
+                </li>
+                <li><a href="estoque.html">Estoque</a></li>
+                <li><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Relatórios</a>
+                    <ul class="submenu">
+                        <li><a href="relatorio-financeiro.html">Financeiro</a></li>
+                        <li><a href="relatorio-vendas.html">Vendas</a></li>
+                    </ul>
+                </li>
+                <li><a href="vendas.html">Vendas</a></li>
+                <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <main class="main-content">
+        <div class="form-container" style="margin: 0 auto;">
+            <h1 style="text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #ff4500; font-weight: 300; font-size: 2.5rem; margin-bottom: 2rem;">Gerenciar</h1>
+            
+            <form id="cadastroUsuario">
+                
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Senha:</label>
+                    <input type="password" id="password" name="password" required minlength="6">
+                </div>
+
+                <div class="form-group" id="confirmPasswordGroup" style="display: none;">
+                    <label for="confirmPassword">Confirmar Senha:</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" minlength="6">
+                </div>
+
+                <div class="form-group" id="nivelGroup">
+                    <label for="nivel">Nível:</label>
+                    <select id="nivel" name="nivel" required>
+                        <option value="usuario">Usuário</option>
+                        <option value="master">Master</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn">Cadastrar Usuário</button>
+                    <button type="button" class="btn btn-secondary" onclick="cancelarEdicao()" id="btnCancelar" style="display: none;">Cancelar</button>
+                </div>
+            </form>
+
+            <div style="margin-top: 2rem; border-top: 1px solid #ddd; padding-top: 2rem;">
+                <button class="btn btn-secondary" onclick="toggleListaUsuarios()">Ver Usuários Cadastrados</button>
+                
+                <div id="listaUsuarios" style="display: none; margin-top: 1rem;">
+                    <h3>Usuários Cadastrados</h3>
+                    <div id="usuariosContainer"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script>
+        // Verificar se é MASTER
+        firebase.auth().onAuthStateChanged(async function(user) {
+            if (!user) {
+                window.location.href = '../login.html';
+            } else {
+                const nivel = await FirebaseDatabase.obterNivelUsuario(user.uid);
+                if (nivel !== 'master') {
+                    alert('Acesso negado. Apenas usuários MASTER podem acessar esta página.');
+                    window.location.href = '../index.html';
+                }
+            }
+        });
+
+        // Função de logout
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '../login.html';
+            });
+        }
+
+        // Funções para gerenciar lista de usuários
+        function toggleListaUsuarios() {
+            const lista = document.getElementById('listaUsuarios');
+            if (lista.style.display === 'none') {
+                lista.style.display = 'block';
+                carregarUsuarios();
+            } else {
+                lista.style.display = 'none';
+            }
+        }
+
+        async function carregarUsuarios() {
+            try {
+                const usuarios = await FirebaseDatabase.obterUsuarios();
+                const container = document.getElementById('usuariosContainer');
+                
+                if (usuarios.length === 0) {
+                    container.innerHTML = '<p>Nenhum usuário cadastrado.</p>';
+                    return;
+                }
+                
+                container.innerHTML = usuarios.map(user => {
+                    const isOriginalMaster = user.email === 'jhonatann.andrade@gmail.com';
+                    const excluirBtn = isOriginalMaster ? '' : `<button class="btn btn-secondary" style="padding: 0.3rem 0.8rem; background-color: #e74c3c;" onclick="excluirUsuario('${user.id}', '${user.email}')">Excluir</button>`;
+                    
+                    return `
+                        <div style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 4px;">
+                            <strong>Email:</strong> ${user.email}<br>
+                            <strong>Nível:</strong> ${user.nivel}<br>
+                            <div style="margin-top: 0.5rem;">
+                                <button class="btn" style="padding: 0.3rem 0.8rem; margin-right: 0.5rem;" onclick="editarUsuario('${user.id}', '${user.email}', '${user.nivel}')">Editar</button>
+                                ${excluirBtn}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Erro ao carregar usuários:', error);
+            }
+        }
+
+        let editandoUsuario = null;
+
+        function editarUsuario(uid, email, nivelAtual) {
+            const isOriginalMaster = email === 'jhonatann.andrade@gmail.com';
+            
+            // Puxar dados para o formulário
+            document.getElementById('email').value = email;
+            document.getElementById('nivel').value = nivelAtual;
+            document.getElementById('password').value = '';
+            document.getElementById('confirmPassword').value = '';
+            
+            // Alterar texto do botão e título
+            document.querySelector('button[type="submit"]').textContent = 'Atualizar Usuário';
+            
+            // Desabilitar campo de email
+            document.getElementById('email').disabled = true;
+            
+            if (isOriginalMaster) {
+                // Para o master original: apenas senha com confirmação
+                document.getElementById('password').disabled = false;
+                document.getElementById('password').required = true;
+                document.getElementById('confirmPasswordGroup').style.display = 'block';
+                document.getElementById('confirmPassword').required = true;
+                document.getElementById('nivelGroup').style.display = 'none';
+            } else {
+                // Para outros usuários: apenas nível
+                document.getElementById('password').disabled = true;
+                document.getElementById('confirmPasswordGroup').style.display = 'none';
+                document.getElementById('confirmPassword').required = false;
+                document.getElementById('nivelGroup').style.display = 'block';
+            }
+            
+            // Mostrar botão cancelar
+            document.getElementById('btnCancelar').style.display = 'inline-block';
+            
+            // Armazenar ID e email do usuário sendo editado
+            editandoUsuario = { uid, email };
+            
+            // Scroll para o topo
+            window.scrollTo(0, 0);
+        }
+        
+        function cancelarEdicao() {
+            document.getElementById('email').disabled = false;
+            document.getElementById('password').disabled = false;
+            document.getElementById('password').required = true;
+            document.getElementById('confirmPasswordGroup').style.display = 'none';
+            document.getElementById('confirmPassword').required = false;
+            document.getElementById('nivelGroup').style.display = 'block';
+            document.querySelector('button[type="submit"]').textContent = 'Cadastrar Usuário';
+            document.getElementById('btnCancelar').style.display = 'none';
+            document.getElementById('cadastroUsuario').reset();
+            editandoUsuario = null;
+        }
+
+        async function excluirUsuario(uid, email) {
+            if (confirm(`Tem certeza que deseja excluir o usuário ${email}?\n\nNOTA: O email permanecerá no sistema de autenticação, mas o usuário não conseguirá acessar o sistema.`)) {
+                try {
+                    await FirebaseDatabase.excluirUsuario(uid);
+                    alert('Usuário removido do sistema com sucesso!\n\nPara recriar este email, use um email diferente ou aguarde algumas horas.');
+                    carregarUsuarios();
+                } catch (error) {
+                    alert('Erro ao excluir usuário.');
+                }
+            }
+        }
+
+        // Cadastrar/Editar usuário
+        document.getElementById('cadastroUsuario').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const nivel = document.getElementById('nivel').value;
+            
+            try {
+                if (editandoUsuario) {
+                    const isOriginalMaster = editandoUsuario.email === 'jhonatann.andrade@gmail.com';
+                    
+                    if (isOriginalMaster) {
+                        // Edição do master original - alterar senha
+                        const confirmPassword = document.getElementById('confirmPassword').value;
+                        
+                        if (password !== confirmPassword) {
+                            alert('As senhas não coincidem!');
+                            return;
+                        }
+                        
+                        // Solicitar senha atual para reautenticação
+                        const senhaAtual = prompt('Digite sua senha atual para confirmar a alteração:');
+                        if (!senhaAtual) {
+                            alert('Senha atual é obrigatória para alterar a senha.');
+                            return;
+                        }
+                        
+                        // Reautenticar e atualizar senha
+                        const user = firebase.auth().currentUser;
+                        const credential = firebase.auth.EmailAuthProvider.credential(user.email, senhaAtual);
+                        await user.reauthenticateWithCredential(credential);
+                        await user.updatePassword(password);
+                        alert('Senha atualizada com sucesso!');
+                    } else {
+                        // Edição de outros usuários - apenas nível
+                        await FirebaseDatabase.atualizarNivelUsuario(editandoUsuario.uid, nivel);
+                        alert('Usuário atualizado com sucesso!');
+                    }
+                    
+                    cancelarEdicao();
+                } else {
+                    // Modo cadastro - criar novo usuário
+                    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                    await FirebaseDatabase.criarUsuario(userCredential.user.uid, email, nivel);
+                    alert('Usuário cadastrado com sucesso!');
+                    this.reset();
+                }
+                
+                // Atualizar lista se estiver visível
+                if (document.getElementById('listaUsuarios').style.display === 'block') {
+                    carregarUsuarios();
+                }
+                
+            } catch (error) {
+                let mensagem = editandoUsuario ? 'Erro ao atualizar usuário' : 'Erro ao cadastrar usuário';
+                if (error.code === 'auth/email-already-in-use') {
+                    mensagem = 'Este email já está em uso';
+                } else if (error.code === 'auth/weak-password') {
+                    mensagem = 'Senha muito fraca (mínimo 6 caracteres)';
+                } else if (error.code === 'auth/wrong-password') {
+                    mensagem = 'Senha atual incorreta';
+                } else if (error.code === 'auth/requires-recent-login') {
+                    mensagem = 'Por segurança, faça login novamente antes de alterar a senha';
+                }
+                alert(mensagem);
+            }
+        });
+    </script>
+</body>
+</html>

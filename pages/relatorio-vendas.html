@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Vendas - Sistema de Gestão</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <style>
+        .relatorio-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+        }
+        .filtros {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            align-items: end;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .venda-item {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .venda-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        .venda-info {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .venda-total {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #ff4500;
+        }
+        .itens-venda {
+            margin: 1rem 0;
+        }
+        .item-produto {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.3rem 0;
+            font-size: 0.9rem;
+        }
+        .pagamento-info {
+            background: #f8f9fa;
+            padding: 0.8rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+        .resumo-geral {
+            background: #e8f5e8;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .resumo-item {
+            display: inline-block;
+            margin: 0 2rem;
+        }
+        .resumo-valor {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .resumo-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        @media print {
+            .sidebar, .filtros {
+                display: none !important;
+            }
+            
+            .header {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            
+            .header .logo img {
+                max-width: 80px;
+                height: auto;
+            }
+            
+            .main-content {
+                margin: 0 !important;
+                padding: 20px !important;
+            }
+            
+            h1 {
+                text-align: center;
+                margin-bottom: 30px;
+                font-size: 18px;
+                color: #000 !important;
+            }
+            
+            .relatorio-container {
+                background: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+            }
+            
+            .resumo-geral {
+                display: flex !important;
+                justify-content: center;
+                background: none !important;
+                border: 1px solid #000;
+                padding: 15px;
+                margin-bottom: 40px;
+                text-align: center;
+            }
+            
+            .resumo-item {
+                display: block;
+                margin: 0 40px;
+            }
+            
+            .resumo-item:last-child {
+                display: none !important;
+            }
+            
+            .resumo-valor {
+                font-size: 14px;
+                font-weight: bold;
+                color: #000 !important;
+            }
+            
+            .resumo-label {
+                font-size: 12px;
+                color: #000 !important;
+            }
+            
+            #listaVendas {
+                display: block !important;
+            }
+            
+            .cabecalho-tabela {
+                display: table-row;
+                font-weight: bold;
+                background: #f0f0f0;
+            }
+            
+            .cabecalho-tabela div {
+                display: table-cell;
+                padding: 8px 5px;
+                border: 1px solid #000;
+                text-align: center;
+                font-size: 12px;
+                font-weight: bold;
+            }
+            
+            .venda-impressao {
+                display: table-row;
+            }
+            
+            .venda-impressao div {
+                display: table-cell;
+                padding: 5px;
+                border: 1px solid #000;
+                text-align: center;
+                font-size: 12px;
+            }
+            
+            .tabela-impressao {
+                display: table;
+                width: 90%;
+                max-width: 800px;
+                border-collapse: collapse;
+                margin: 20px auto 0 auto;
+            }
+            
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="../assets/images/Move Up.png" alt="Move Up Fit">
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Início</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Cadastro</a>
+                    <ul class="submenu">
+                        <li><a href="cadastro-marca.html">Fornecedor</a></li>
+                        <li><a href="cadastro-maquinas.html">Máquina de Cartão</a></li>
+                        <li><a href="cadastro-pix.html">PIX</a></li>
+                        <li><a href="cadastro-pecas.html">Peças</a></li>
+                    </ul>
+                </li>
+                <li><a href="estoque.html">Estoque</a></li>
+                <li id="menuUsuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Relatórios</a>
+                    <ul class="submenu">
+                        <li><a href="relatorio-financeiro.html">Financeiro</a></li>
+                        <li><a href="relatorio-vendas.html">Vendas</a></li>
+                        <li><a href="relatorio-analitico.html">Analítico</a></li>
+                    </ul>
+                </li>
+                <li><a href="vendas.html">Vendas</a></li>
+                <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <main class="main-content" style="margin-top: 150px;">
+        <h1 style="text-align: center; color: #ff4500; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 2.5rem; font-weight: 300; margin-bottom: 2rem;">Relatório de Vendas</h1>
+        
+        <div class="relatorio-container">
+            <div class="filtros">
+                <div class="form-group">
+                    <label for="dataInicio">Data Início:</label>
+                    <input type="date" id="dataInicio">
+                </div>
+                <div class="form-group">
+                    <label for="dataFim">Data Fim:</label>
+                    <input type="date" id="dataFim">
+                </div>
+                <div class="form-group">
+                    <label for="filtroFormaPagamento">Forma de Pagamento:</label>
+                    <select id="filtroFormaPagamento">
+                        <option value="">Todas</option>
+                        <option value="credito">Cartão de Crédito</option>
+                        <option value="debito">Cartão de Débito</option>
+                        <option value="avista">À Vista</option>
+                        <option value="crediario">Crediário</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="filtrarVendas()">Filtrar</button>
+                <button class="btn btn-secondary" onclick="imprimirRelatorio()">Imprimir</button>
+            </div>
+
+            <div class="resumo-geral" id="resumoGeral">
+                <div class="resumo-item">
+                    <div class="resumo-valor" id="totalVendas">R$ 0,00</div>
+                    <div class="resumo-label">Total de Vendas</div>
+                </div>
+                <div class="resumo-item">
+                    <div class="resumo-valor" id="quantidadeVendas">0</div>
+                    <div class="resumo-label">Quantidade de Vendas</div>
+                </div>
+                <div class="resumo-item">
+                    <div class="resumo-valor" id="ticketMedio">R$ 0,00</div>
+                    <div class="resumo-label">Ticket Médio</div>
+                </div>
+            </div>
+
+            <div id="listaVendas"></div>
+        </div>
+    </main>
+
+    <!-- Modal para motivo de exclusão -->
+    <div id="modalMotivo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 8px; width: 400px;">
+            <h3>Motivo do Cancelamento</h3>
+            <div class="form-group">
+                <label for="motivoCancelamento">Descreva o motivo:</label>
+                <textarea id="motivoCancelamento" rows="4" style="width: 100%; resize: vertical;" placeholder="Ex: Cliente desistiu, produto com defeito, etc."></textarea>
+            </div>
+            <div style="text-align: right; margin-top: 1rem;">
+                <button class="btn btn-secondary" onclick="fecharModalMotivo()">Cancelar</button>
+                <button class="btn" onclick="confirmarCancelamento()" style="background: #dc3545; margin-left: 0.5rem;">Confirmar Cancelamento</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script>
+        let todasVendas = [];
+        let vendasFiltradas = [];
+
+        // Aguardar Firebase estar pronto
+        function aguardarFirebase() {
+            return new Promise((resolve) => {
+                if (typeof FirebaseDatabase !== 'undefined' && FirebaseDatabase.obterVendas) {
+                    resolve();
+                } else {
+                    setTimeout(() => aguardarFirebase().then(resolve), 100);
+                }
+            });
+        }
+
+        // Verificar autenticação
+        firebase.auth().onAuthStateChanged(async function(user) {
+            if (!user) {
+                window.location.href = '../login.html';
+            } else {
+                await aguardarFirebase();
+                const nivel = await FirebaseDatabase.obterNivelUsuario(user.uid);
+                if (nivel === 'master') {
+                    document.getElementById('menuUsuarios').style.display = 'block';
+                }
+                carregarVendas();
+                
+                // Limpar histórico antigo (executar 1x por dia)
+                const ultimaLimpeza = localStorage.getItem('ultimaLimpezaHistorico');
+                const hoje = new Date().toDateString();
+                if (ultimaLimpeza !== hoje) {
+                    FirebaseDatabase.limparHistoricoAntigo();
+                    localStorage.setItem('ultimaLimpezaHistorico', hoje);
+                }
+            }
+        });
+
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '../login.html';
+            });
+        }
+
+        async function carregarVendas() {
+            try {
+                console.log('Carregando vendas...');
+                todasVendas = await FirebaseDatabase.obterVendas();
+                console.log('Vendas carregadas:', todasVendas.length);
+                vendasFiltradas = [...todasVendas];
+                exibirVendas();
+                atualizarResumo();
+            } catch (error) {
+                console.error('Erro ao carregar vendas:', error);
+                document.getElementById('listaVendas').innerHTML = '<p>Erro ao carregar vendas. Verifique o console.</p>';
+            }
+        }
+
+        function filtrarVendas() {
+            const dataInicio = document.getElementById('dataInicio').value;
+            const dataFim = document.getElementById('dataFim').value;
+            const formaPagamento = document.getElementById('filtroFormaPagamento').value;
+
+            vendasFiltradas = todasVendas.filter(venda => {
+                let incluir = true;
+
+                // Filtro por data
+                if (dataInicio || dataFim) {
+                    let dataVenda;
+                    try {
+                        if (venda.dataVenda && venda.dataVenda.toDate) {
+                            dataVenda = venda.dataVenda.toDate();
+                        } else if (venda.dataVenda) {
+                            dataVenda = new Date(venda.dataVenda);
+                        } else {
+                            return false;
+                        }
+                        
+                        if (dataInicio && dataVenda < new Date(dataInicio)) incluir = false;
+                        if (dataFim && dataVenda > new Date(dataFim + 'T23:59:59')) incluir = false;
+                    } catch (error) {
+                        console.error('Erro ao filtrar por data:', error);
+                        return false;
+                    }
+                }
+
+                // Filtro por forma de pagamento
+                if (formaPagamento && venda.pagamento && venda.pagamento.formaPagamento !== formaPagamento) {
+                    incluir = false;
+                }
+
+                return incluir;
+            });
+
+            exibirVendas();
+            atualizarResumo();
+        }
+
+        function exibirVendas() {
+            const container = document.getElementById('listaVendas');
+            
+            if (vendasFiltradas.length === 0) {
+                container.innerHTML = '<p>Nenhuma venda encontrada.</p>';
+                return;
+            }
+
+            container.innerHTML = vendasFiltradas.map(venda => {
+                let dataVenda, dataFormatada, horaFormatada;
+                
+                try {
+                    if (venda.dataVenda && venda.dataVenda.toDate) {
+                        dataVenda = venda.dataVenda.toDate();
+                    } else if (venda.dataVenda) {
+                        dataVenda = new Date(venda.dataVenda);
+                    } else {
+                        dataVenda = new Date();
+                    }
+                    dataFormatada = dataVenda.toLocaleDateString('pt-BR');
+                    horaFormatada = dataVenda.toLocaleTimeString('pt-BR');
+                } catch (error) {
+                    console.error('Erro ao processar data:', error);
+                    dataFormatada = 'Data inválida';
+                    horaFormatada = '';
+                }
+
+                let pagamentoTexto = 'Não informado';
+                if (venda.pagamento && venda.pagamento.formaPagamento) {
+                    pagamentoTexto = getFormaPagamentoTexto(venda.pagamento.formaPagamento);
+                    if (venda.pagamento.parcelas && venda.pagamento.parcelas > 1) {
+                        pagamentoTexto += ` (${venda.pagamento.parcelas}x)`;
+                    }
+                }
+
+                let entradaTexto = '';
+                if (venda.entrada) {
+                    entradaTexto = `<div><strong>Entrada:</strong> R$ ${venda.entrada.valor.toFixed(2)} (${getFormaPagamentoTexto(venda.entrada.formaPagamento)})</div>`;
+                }
+
+                return `
+                    <div class="venda-item">
+                        <div class="venda-header">
+                            <div>
+                                <div><strong>Cliente:</strong> ${venda.cliente ? venda.cliente.nome : 'Não informado'}</div>
+                                <div class="venda-info">${dataFormatada} ${horaFormatada ? 'às ' + horaFormatada : ''}</div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div class="venda-total">R$ ${(venda.total || 0).toFixed(2)}</div>
+                                <div>
+                                    <button class="btn btn-secondary" onclick="editarVenda('${venda.id}')" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Editar</button>
+                                    <button class="btn" onclick="cancelarVenda('${venda.id}')" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background: #dc3545; margin-left: 0.3rem;">Cancelar</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="itens-venda">
+                            <strong>Itens:</strong>
+                            ${venda.itens && venda.itens.length > 0 ? venda.itens.map(item => `
+                                <div class="item-produto">
+                                    <span>${item.quantidade || 0}x ${item.nome || 'Item'} (${item.codigo || 'N/A'})</span>
+                                    <span>R$ ${(item.subtotal || 0).toFixed(2)}</span>
+                                </div>
+                            `).join('') : '<div>Nenhum item encontrado</div>'}
+                        </div>
+
+                        <div class="pagamento-info">
+                            <div><strong>Subtotal:</strong> R$ ${(venda.subtotal || 0).toFixed(2)}</div>
+                            ${(venda.desconto || 0) > 0 ? `<div><strong>Desconto:</strong> R$ ${venda.desconto.toFixed(2)}</div>` : ''}
+                            ${entradaTexto}
+                            <div><strong>Forma de Pagamento:</strong> ${pagamentoTexto}</div>
+                            ${(venda.saldoRestante || 0) > 0 ? `<div><strong>Saldo Restante:</strong> R$ ${venda.saldoRestante.toFixed(2)}</div>` : ''}
+                            ${venda.dataPromessa ? `<div><strong>Data Promessa:</strong> ${new Date(venda.dataPromessa).toLocaleDateString('pt-BR')}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function atualizarResumo() {
+            const totalVendas = vendasFiltradas.reduce((sum, venda) => sum + venda.total, 0);
+            const quantidadeVendas = vendasFiltradas.length;
+            const ticketMedio = quantidadeVendas > 0 ? totalVendas / quantidadeVendas : 0;
+
+            document.getElementById('totalVendas').textContent = `R$ ${totalVendas.toFixed(2)}`;
+            document.getElementById('quantidadeVendas').textContent = quantidadeVendas;
+            document.getElementById('ticketMedio').textContent = `R$ ${ticketMedio.toFixed(2)}`;
+        }
+
+        function getFormaPagamentoTexto(forma) {
+            const formas = {
+                'credito': 'Cartão de Crédito',
+                'debito': 'Cartão de Débito',
+                'avista': 'À Vista',
+                'crediario': 'Crediário'
+            };
+            return formas[forma] || forma;
+        }
+
+        function imprimirRelatorio() {
+            // Criar estrutura para impressão
+            const container = document.getElementById('listaVendas');
+            const vendas = vendasFiltradas;
+            
+            // Salvar conteúdo original
+            const conteudoOriginal = container.innerHTML;
+            
+            // Criar cabeçalho da tabela
+            let htmlImpressao = `
+                <div class="tabela-impressao">
+                    <div class="cabecalho-tabela">
+                        <div>Cliente</div>
+                        <div>Subtotal</div>
+                        <div>Entrada</div>
+                        <div>Forma Pagamento</div>
+                        <div>Saldo Restante</div>
+                    </div>
+            `;
+            
+            // Adicionar vendas
+            vendas.forEach(venda => {
+                const cliente = venda.cliente ? venda.cliente.nome : 'Não informado';
+                const subtotal = `R$ ${(venda.subtotal || 0).toFixed(2)}`;
+                const entrada = venda.entrada ? `R$ ${venda.entrada.valor.toFixed(2)}` : 'R$ 0,00';
+                const formaPagamento = venda.pagamento ? getFormaPagamentoTexto(venda.pagamento.formaPagamento) : 'Não informado';
+                const saldoRestante = `R$ ${(venda.saldoRestante || 0).toFixed(2)}`;
+                
+                htmlImpressao += `
+                    <div class="venda-impressao">
+                        <div>${cliente}</div>
+                        <div>${subtotal}</div>
+                        <div>${entrada}</div>
+                        <div>${formaPagamento}</div>
+                        <div>${saldoRestante}</div>
+                    </div>
+                `;
+            });
+            
+            htmlImpressao += '</div>';
+            
+            // Substituir conteúdo
+            container.innerHTML = htmlImpressao;
+            
+            // Imprimir
+            window.print();
+            
+            // Restaurar conteúdo original
+            setTimeout(() => {
+                container.innerHTML = conteudoOriginal;
+            }, 1000);
+        }
+
+        async function editarVenda(vendaId) {
+            try {
+                // Registrar no histórico
+                const user = firebase.auth().currentUser;
+                const usuarioEmail = user ? user.email : 'Usuário desconhecido';
+                
+                const venda = await FirebaseDatabase.obterVendaPorId(vendaId);
+                await FirebaseDatabase.registrarHistorico(
+                    'EDICAO_VENDA',
+                    {
+                        vendaId: vendaId,
+                        cliente: venda.cliente.nome,
+                        total: venda.total
+                    },
+                    usuarioEmail
+                );
+                
+                // Redirecionar para página de vendas
+                window.location.href = 'vendas.html?editar=' + vendaId;
+            } catch (error) {
+                console.error('Erro ao registrar edição:', error);
+                window.location.href = 'vendas.html?editar=' + vendaId;
+            }
+        }
+
+        let vendaCancelarId = null;
+
+        function cancelarVenda(vendaId) {
+            vendaCancelarId = vendaId;
+            document.getElementById('modalMotivo').style.display = 'block';
+            document.getElementById('motivoCancelamento').value = '';
+        }
+
+        function fecharModalMotivo() {
+            document.getElementById('modalMotivo').style.display = 'none';
+            vendaCancelarId = null;
+        }
+
+        async function confirmarCancelamento() {
+            const motivo = document.getElementById('motivoCancelamento').value.trim();
+            if (!motivo) {
+                alert('Por favor, descreva o motivo do cancelamento.');
+                return;
+            }
+
+            try {
+                // Obter dados da venda
+                const venda = await FirebaseDatabase.obterVendaPorId(vendaCancelarId);
+                if (!venda) {
+                    alert('Venda não encontrada!');
+                    return;
+                }
+
+                // Obter usuário atual
+                const user = firebase.auth().currentUser;
+                const usuarioEmail = user ? user.email : 'Usuário desconhecido';
+
+                // Registrar no histórico
+                await FirebaseDatabase.registrarHistorico(
+                    'CANCELAMENTO_VENDA',
+                    {
+                        vendaId: vendaCancelarId,
+                        cliente: venda.cliente.nome,
+                        total: venda.total,
+                        motivo: motivo,
+                        itens: venda.itens.map(item => `${item.quantidade}x ${item.nome}`)
+                    },
+                    usuarioEmail
+                );
+
+                // Restaurar estoque de cada item
+                for (const item of venda.itens) {
+                    try {
+                        // Obter estoque atual
+                        const pecas = await FirebaseDatabase.obterPecas();
+                        const peca = pecas.find(p => p.id === item.produtoId);
+                        
+                        if (peca) {
+                            const novoEstoque = peca.estoque + item.quantidade;
+                            await FirebaseDatabase.atualizarEstoque(item.produtoId, novoEstoque);
+                            console.log(`Estoque restaurado: ${item.nome} +${item.quantidade}`);
+                        }
+                    } catch (error) {
+                        console.error('Erro ao restaurar estoque do item:', item.nome, error);
+                    }
+                }
+
+                // Excluir venda
+                await FirebaseDatabase.excluirVenda(vendaCancelarId);
+                
+                alert('Venda cancelada com sucesso! Estoque restaurado.');
+                
+                // Fechar modal e recarregar vendas
+                fecharModalMotivo();
+                carregarVendas();
+                
+            } catch (error) {
+                console.error('Erro ao cancelar venda:', error);
+                alert('Erro ao cancelar venda. Verifique o console.');
+            }
+        }
+
+        // Definir data padrão (últimos 30 dias)
+        window.onload = function() {
+            const hoje = new Date();
+            const trintaDiasAtras = new Date();
+            trintaDiasAtras.setDate(hoje.getDate() - 30);
+            
+            document.getElementById('dataFim').value = hoje.toISOString().split('T')[0];
+            document.getElementById('dataInicio').value = trintaDiasAtras.toISOString().split('T')[0];
+        }
+    </script>
+</body>
+</html>

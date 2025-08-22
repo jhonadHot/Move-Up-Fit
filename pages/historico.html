@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Ações - Sistema de Gestão</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <style>
+        .historico-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+        }
+        .filtros {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            align-items: end;
+        }
+        .acao-item {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .acao-item.NOVA_VENDA { border-left-color: #28a745; }
+        .acao-item.EDICAO_VENDA { border-left-color: #ffc107; }
+        .acao-item.ATUALIZACAO_VENDA { border-left-color: #17a2b8; }
+        .acao-item.CANCELAMENTO_VENDA { border-left-color: #dc3545; }
+        .acao-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .acao-tipo {
+            font-weight: bold;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: white;
+        }
+        .NOVA_VENDA { background: #28a745; }
+        .EDICAO_VENDA { background: #ffc107; color: #000; }
+        .ATUALIZACAO_VENDA { background: #17a2b8; }
+        .CANCELAMENTO_VENDA { background: #dc3545; }
+        .acao-detalhes {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        .resumo-acoes {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .resumo-item {
+            display: inline-block;
+            margin: 0 2rem;
+        }
+        .resumo-valor {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .resumo-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="../assets/images/Move Up.png" alt="Move Up Fit">
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Início</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Cadastro de Peças</a>
+                    <ul class="submenu">
+                        <li><a href="cadastro-pecas.html">Cadastrar Peça</a></li>
+                        <li><a href="cadastro-marca.html">Cadastrar Marca</a></li>
+                    </ul>
+                </li>
+                <li><a href="estoque.html">Estoque</a></li>
+                <li><a href="vendas.html">Vendas</a></li>
+                <li><a href="relatorio-vendas.html">Relatório de Vendas</a></li>
+                <li><a href="relatorio-financeiro.html">Relatório Financeiro</a></li>
+                <li id="menuUsuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                <li id="menuHistorico" style="display: none;"><a href="historico.html">Histórico de Ações</a></li>
+                <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <main class="main-content" style="margin-top: 150px;">
+        <h2>Histórico de Ações</h2>
+        
+        <div class="historico-container">
+            <div class="filtros">
+                <div class="form-group">
+                    <label for="dataInicio">Data Início:</label>
+                    <input type="date" id="dataInicio">
+                </div>
+                <div class="form-group">
+                    <label for="dataFim">Data Fim:</label>
+                    <input type="date" id="dataFim">
+                </div>
+                <div class="form-group">
+                    <label for="filtroAcao">Tipo de Ação:</label>
+                    <select id="filtroAcao">
+                        <option value="">Todas</option>
+                        <option value="NOVA_VENDA">Nova Venda</option>
+                        <option value="EDICAO_VENDA">Edição de Venda</option>
+                        <option value="ATUALIZACAO_VENDA">Atualização de Venda</option>
+                        <option value="CANCELAMENTO_VENDA">Cancelamento de Venda</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="filtroUsuario">Usuário:</label>
+                    <input type="text" id="filtroUsuario" placeholder="Email do usuário">
+                </div>
+                <button class="btn" onclick="filtrarHistorico()">Filtrar</button>
+                <button class="btn btn-secondary" onclick="limparFiltros()">Limpar</button>
+            </div>
+
+            <div class="resumo-acoes" id="resumoAcoes">
+                <div class="resumo-item">
+                    <div class="resumo-valor" id="totalAcoes">0</div>
+                    <div class="resumo-label">Total de Ações</div>
+                </div>
+                <div class="resumo-item">
+                    <div class="resumo-valor" id="totalVendas">0</div>
+                    <div class="resumo-label">Vendas Realizadas</div>
+                </div>
+                <div class="resumo-item">
+                    <div class="resumo-valor" id="totalCancelamentos">0</div>
+                    <div class="resumo-label">Cancelamentos</div>
+                </div>
+            </div>
+
+            <div id="listaHistorico"></div>
+        </div>
+    </main>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script>
+        let todasAcoes = [];
+        let acoesFiltradas = [];
+
+        // Verificar autenticação e permissão
+        firebase.auth().onAuthStateChanged(async function(user) {
+            if (!user) {
+                window.location.href = '../login.html';
+            } else {
+                const nivel = await FirebaseDatabase.obterNivelUsuario(user.uid);
+                if (nivel !== 'master') {
+                    alert('Acesso negado! Apenas usuários master podem acessar o histórico.');
+                    window.location.href = '../index.html';
+                    return;
+                }
+                
+                document.getElementById('menuUsuarios').style.display = 'block';
+                document.getElementById('menuHistorico').style.display = 'block';
+                carregarHistorico();
+            }
+        });
+
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '../login.html';
+            });
+        }
+
+        // Aguardar Firebase estar pronto
+        function aguardarFirebase() {
+            return new Promise((resolve) => {
+                if (typeof db !== 'undefined' && db) {
+                    resolve();
+                } else {
+                    setTimeout(() => aguardarFirebase().then(resolve), 100);
+                }
+            });
+        }
+
+        async function carregarHistorico() {
+            try {
+                await aguardarFirebase();
+                console.log('Carregando histórico...');
+                const snapshot = await db.collection('historico').orderBy('data', 'desc').get();
+                todasAcoes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log('Histórico carregado:', todasAcoes.length, 'registros');
+                acoesFiltradas = [...todasAcoes];
+                exibirHistorico();
+                atualizarResumo();
+            } catch (error) {
+                console.error('Erro ao carregar histórico:', error);
+                document.getElementById('listaHistorico').innerHTML = '<p>Erro ao carregar histórico. Verifique o console.</p>';
+            }
+        }
+
+        function filtrarHistorico() {
+            const dataInicio = document.getElementById('dataInicio').value;
+            const dataFim = document.getElementById('dataFim').value;
+            const tipoAcao = document.getElementById('filtroAcao').value;
+            const usuario = document.getElementById('filtroUsuario').value.toLowerCase();
+
+            acoesFiltradas = todasAcoes.filter(acao => {
+                let incluir = true;
+
+                // Filtro por data
+                if (dataInicio || dataFim) {
+                    let dataAcao;
+                    try {
+                        if (acao.data && acao.data.toDate) {
+                            dataAcao = acao.data.toDate();
+                        } else if (acao.data) {
+                            dataAcao = new Date(acao.data);
+                        } else {
+                            return false;
+                        }
+                        
+                        if (dataInicio && dataAcao < new Date(dataInicio)) incluir = false;
+                        if (dataFim && dataAcao > new Date(dataFim + 'T23:59:59')) incluir = false;
+                    } catch (error) {
+                        console.error('Erro ao filtrar por data:', error);
+                        return false;
+                    }
+                }
+
+                // Filtro por tipo de ação
+                if (tipoAcao && acao.acao !== tipoAcao) incluir = false;
+
+                // Filtro por usuário
+                if (usuario && acao.usuario && !acao.usuario.toLowerCase().includes(usuario)) incluir = false;
+
+                return incluir;
+            });
+
+            exibirHistorico();
+            atualizarResumo();
+        }
+
+        function limparFiltros() {
+            document.getElementById('dataInicio').value = '';
+            document.getElementById('dataFim').value = '';
+            document.getElementById('filtroAcao').value = '';
+            document.getElementById('filtroUsuario').value = '';
+            acoesFiltradas = [...todasAcoes];
+            exibirHistorico();
+            atualizarResumo();
+        }
+
+        function exibirHistorico() {
+            const container = document.getElementById('listaHistorico');
+            
+            if (acoesFiltradas.length === 0) {
+                container.innerHTML = '<p>Nenhuma ação encontrada.</p>';
+                return;
+            }
+
+            container.innerHTML = acoesFiltradas.map(acao => {
+                let dataAcao, dataFormatada, horaFormatada;
+                
+                try {
+                    if (acao.data && acao.data.toDate) {
+                        dataAcao = acao.data.toDate();
+                    } else if (acao.data) {
+                        dataAcao = new Date(acao.data);
+                    } else {
+                        dataAcao = new Date();
+                    }
+                    dataFormatada = dataAcao.toLocaleDateString('pt-BR');
+                    horaFormatada = dataAcao.toLocaleTimeString('pt-BR');
+                } catch (error) {
+                    console.error('Erro ao processar data:', error);
+                    dataFormatada = 'Data inválida';
+                    horaFormatada = '';
+                }
+
+                let detalhesHtml = '';
+                if (acao.detalhes) {
+                    if (acao.detalhes.cliente) detalhesHtml += `<div><strong>Cliente:</strong> ${acao.detalhes.cliente}</div>`;
+                    if (acao.detalhes.total) detalhesHtml += `<div><strong>Total:</strong> R$ ${acao.detalhes.total.toFixed(2)}</div>`;
+                    if (acao.detalhes.motivo) detalhesHtml += `<div><strong>Motivo:</strong> ${acao.detalhes.motivo}</div>`;
+                    if (acao.detalhes.formaPagamento) detalhesHtml += `<div><strong>Pagamento:</strong> ${acao.detalhes.formaPagamento}</div>`;
+                    if (acao.detalhes.itens) detalhesHtml += `<div><strong>Itens:</strong> ${acao.detalhes.itens.join(', ')}</div>`;
+                }
+
+                return `
+                    <div class="acao-item ${acao.acao}">
+                        <div class="acao-header">
+                            <div>
+                                <span class="acao-tipo ${acao.acao}">${getTipoAcaoTexto(acao.acao)}</span>
+                                <span style="margin-left: 1rem; font-weight: bold;">${acao.usuario}</span>
+                            </div>
+                            <div style="font-size: 0.9rem; color: #666;">
+                                ${dataFormatada} às ${horaFormatada}
+                            </div>
+                        </div>
+                        <div class="acao-detalhes">
+                            ${detalhesHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function atualizarResumo() {
+            const totalAcoes = acoesFiltradas.length;
+            const totalVendas = acoesFiltradas.filter(a => a.acao === 'NOVA_VENDA').length;
+            const totalCancelamentos = acoesFiltradas.filter(a => a.acao === 'CANCELAMENTO_VENDA').length;
+
+            document.getElementById('totalAcoes').textContent = totalAcoes;
+            document.getElementById('totalVendas').textContent = totalVendas;
+            document.getElementById('totalCancelamentos').textContent = totalCancelamentos;
+        }
+
+        function getTipoAcaoTexto(acao) {
+            const tipos = {
+                'NOVA_VENDA': 'Nova Venda',
+                'EDICAO_VENDA': 'Edição',
+                'ATUALIZACAO_VENDA': 'Atualização',
+                'CANCELAMENTO_VENDA': 'Cancelamento'
+            };
+            return tipos[acao] || acao;
+        }
+
+        // Definir data padrão (últimos 7 dias)
+        window.onload = function() {
+            const hoje = new Date();
+            const seteDiasAtras = new Date();
+            seteDiasAtras.setDate(hoje.getDate() - 7);
+            
+            document.getElementById('dataFim').value = hoje.toISOString().split('T')[0];
+            document.getElementById('dataInicio').value = seteDiasAtras.toISOString().split('T')[0];
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório Analítico - Sistema de Gestão</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .filtros {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 0 auto 2rem auto;
+            width: 90%;
+            max-width: 1200px;
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .analise-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .analise-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto 2rem auto;
+        }
+        .analise-card h3 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        .ranking-item:first-child {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .ranking-item:nth-child(2) {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+        }
+        .ranking-item:nth-child(3) {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .grafico-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .grafico-container h3 {
+            margin: 0 0 1rem 0;
+            text-align: center;
+            color: #333;
+        }
+        @media (max-width: 768px) {
+            .analise-container {
+                grid-template-columns: 1fr;
+            }
+            .filtros {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="../assets/images/Move Up.png" alt="Move Up Fit">
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Início</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Cadastro</a>
+                    <ul class="submenu">
+                        <li><a href="cadastro-marca.html">Fornecedor</a></li>
+                        <li><a href="cadastro-maquinas.html">Máquina de Cartão</a></li>
+                        <li><a href="cadastro-pix.html">PIX</a></li>
+                        <li><a href="cadastro-pecas.html">Peças</a></li>
+                    </ul>
+                </li>
+                <li><a href="estoque.html">Estoque</a></li>
+                <li id="menuUsuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Relatórios</a>
+                    <ul class="submenu">
+                        <li><a href="relatorio-financeiro.html">Financeiro</a></li>
+                        <li><a href="relatorio-vendas.html">Vendas</a></li>
+                        <li><a href="relatorio-analitico.html">Analítico</a></li>
+                    </ul>
+                </li>
+                <li><a href="vendas.html">Vendas</a></li>
+                <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <main class="main-content" style="margin-top: 150px;">
+        <h1 style="text-align: center; color: #ff4500; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 2.5rem; font-weight: 300; margin-bottom: 2rem;">Relatório Analítico</h1>
+        
+        <div class="filtros">
+            <div class="form-group">
+                <label for="dataInicio">Data Início:</label>
+                <input type="date" id="dataInicio">
+            </div>
+            <div class="form-group">
+                <label for="dataFim">Data Fim:</label>
+                <input type="date" id="dataFim">
+            </div>
+            <div class="form-group">
+                <button class="btn" onclick="gerarAnalise()">Gerar Análise</button>
+                <button class="btn btn-secondary" onclick="limparFiltros()">Limpar</button>
+            </div>
+        </div>
+
+        <div class="analise-container">
+            <div class="grafico-container">
+                <h3>Vendas por Dia da Semana</h3>
+                <canvas id="graficoVendasDiaSemana"></canvas>
+            </div>
+            <div class="grafico-container">
+                <h3>Vendas por Categoria</h3>
+                <canvas id="graficoVendasCategoria"></canvas>
+            </div>
+        </div>
+
+        <div class="analise-card">
+            <h3>Peças Mais Vendidas</h3>
+            <div id="rankingPecas">
+                <p style="text-align: center; color: #666;">Selecione um período para ver a análise</p>
+            </div>
+        </div>
+
+        <div class="analise-card">
+            <h3>Clientes que Mais Compraram</h3>
+            <div id="rankingClientes">
+                <p style="text-align: center; color: #666;">Selecione um período para ver a análise</p>
+            </div>
+        </div>
+
+        <div class="analise-card">
+            <h3>Dias com Mais Vendas</h3>
+            <div id="rankingDias">
+                <p style="text-align: center; color: #666;">Selecione um período para ver a análise</p>
+            </div>
+        </div>
+
+        <div class="analise-card">
+            <h3>Análise por Forma de Pagamento</h3>
+            <div id="analiseFormaPagamento">
+                <p style="text-align: center; color: #666;">Selecione um período para ver a análise</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script>
+        let todasVendas = [];
+        let produtosDisponiveis = [];
+        let graficoVendasDia = null;
+        let graficoVendasCat = null;
+
+        // Verificar autenticação
+        firebase.auth().onAuthStateChanged(async function(user) {
+            if (!user) {
+                window.location.href = '../login.html';
+            } else {
+                const nivel = await FirebaseDatabase.obterNivelUsuario(user.uid);
+                if (nivel === 'master') {
+                    document.getElementById('menuUsuarios').style.display = 'block';
+                }
+                
+                // Definir datas padrão (último mês)
+                const hoje = new Date();
+                const mesPassado = new Date(hoje.getFullYear(), hoje.getMonth() - 1, hoje.getDate());
+                
+                document.getElementById('dataInicio').value = mesPassado.toISOString().split('T')[0];
+                document.getElementById('dataFim').value = hoje.toISOString().split('T')[0];
+                
+                gerarAnalise();
+            }
+        });
+
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '../login.html';
+            });
+        }
+
+        async function gerarAnalise() {
+            try {
+                const dataInicio = document.getElementById('dataInicio').value;
+                const dataFim = document.getElementById('dataFim').value;
+                
+                if (!dataInicio || !dataFim) {
+                    alert('Selecione as datas de início e fim');
+                    return;
+                }
+
+                todasVendas = await FirebaseDatabase.obterVendas();
+                produtosDisponiveis = await FirebaseDatabase.obterPecas();
+                const vendasFiltradas = filtrarVendasPorData(todasVendas, dataInicio, dataFim);
+                
+                analisarPecasMaisVendidas(vendasFiltradas);
+                analisarClientesTopCompradores(vendasFiltradas);
+                analisarDiasMaisVendas(vendasFiltradas);
+                analisarFormaPagamento(vendasFiltradas);
+                gerarGraficos(vendasFiltradas);
+                
+            } catch (error) {
+                console.error('Erro ao gerar análise:', error);
+                alert('Erro ao gerar análise');
+            }
+        }
+
+        function filtrarVendasPorData(vendas, dataInicio, dataFim) {
+            const inicio = new Date(dataInicio + 'T00:00:00');
+            const fim = new Date(dataFim + 'T23:59:59');
+            
+            return vendas.filter(venda => {
+                if (!venda.dataVenda) return false;
+                
+                let dataVenda;
+                if (venda.dataVenda.toDate) {
+                    dataVenda = venda.dataVenda.toDate();
+                } else {
+                    dataVenda = new Date(venda.dataVenda);
+                }
+                
+                return dataVenda >= inicio && dataVenda <= fim;
+            });
+        }
+
+        function analisarPecasMaisVendidas(vendas) {
+            const pecasVendidas = {};
+            
+            vendas.forEach(venda => {
+                if (venda.itens) {
+                    venda.itens.forEach(item => {
+                        const nome = item.nome || 'Item sem nome';
+                        if (!pecasVendidas[nome]) {
+                            pecasVendidas[nome] = {
+                                quantidade: 0,
+                                valor: 0
+                            };
+                        }
+                        pecasVendidas[nome].quantidade += item.quantidade || 0;
+                        pecasVendidas[nome].valor += item.subtotal || 0;
+                    });
+                }
+            });
+
+            const ranking = Object.entries(pecasVendidas)
+                .sort((a, b) => b[1].quantidade - a[1].quantidade)
+                .slice(0, 10);
+
+            const container = document.getElementById('rankingPecas');
+            if (ranking.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">Nenhuma venda encontrada</p>';
+                return;
+            }
+
+            container.innerHTML = ranking.map(([nome, dados], index) => `
+                <div class="ranking-item">
+                    <div>
+                        <strong>${index + 1}º - ${nome}</strong>
+                    </div>
+                    <div>
+                        <span>${dados.quantidade} unidades</span>
+                        <span style="margin-left: 1rem; color: #28a745;">R$ ${dados.valor.toFixed(2)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function analisarClientesTopCompradores(vendas) {
+            const clientes = {};
+            
+            vendas.forEach(venda => {
+                const nomeCliente = venda.cliente?.nome || 'Cliente não informado';
+                if (!clientes[nomeCliente]) {
+                    clientes[nomeCliente] = {
+                        compras: 0,
+                        valor: 0
+                    };
+                }
+                clientes[nomeCliente].compras += 1;
+                clientes[nomeCliente].valor += venda.total || 0;
+            });
+
+            const ranking = Object.entries(clientes)
+                .sort((a, b) => b[1].valor - a[1].valor)
+                .slice(0, 10);
+
+            const container = document.getElementById('rankingClientes');
+            if (ranking.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">Nenhuma venda encontrada</p>';
+                return;
+            }
+
+            container.innerHTML = ranking.map(([nome, dados], index) => `
+                <div class="ranking-item">
+                    <div>
+                        <strong>${index + 1}º - ${nome}</strong>
+                    </div>
+                    <div>
+                        <span>${dados.compras} compras</span>
+                        <span style="margin-left: 1rem; color: #28a745;">R$ ${dados.valor.toFixed(2)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function analisarDiasMaisVendas(vendas) {
+            const diasVendas = {};
+            
+            vendas.forEach(venda => {
+                if (!venda.dataVenda) return;
+                
+                let dataVenda;
+                if (venda.dataVenda.toDate) {
+                    dataVenda = venda.dataVenda.toDate();
+                } else {
+                    dataVenda = new Date(venda.dataVenda);
+                }
+                
+                const dataStr = dataVenda.toLocaleDateString('pt-BR');
+                if (!diasVendas[dataStr]) {
+                    diasVendas[dataStr] = {
+                        vendas: 0,
+                        valor: 0
+                    };
+                }
+                diasVendas[dataStr].vendas += 1;
+                diasVendas[dataStr].valor += venda.total || 0;
+            });
+
+            const ranking = Object.entries(diasVendas)
+                .sort((a, b) => b[1].valor - a[1].valor)
+                .slice(0, 10);
+
+            const container = document.getElementById('rankingDias');
+            if (ranking.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">Nenhuma venda encontrada</p>';
+                return;
+            }
+
+            container.innerHTML = ranking.map(([data, dados], index) => `
+                <div class="ranking-item">
+                    <div>
+                        <strong>${index + 1}º - ${data}</strong>
+                    </div>
+                    <div>
+                        <span>${dados.vendas} vendas</span>
+                        <span style="margin-left: 1rem; color: #28a745;">R$ ${dados.valor.toFixed(2)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function analisarFormaPagamento(vendas) {
+            const formas = {};
+            
+            vendas.forEach(venda => {
+                const forma = getFormaPagamentoTexto(venda.pagamento?.formaPagamento);
+                if (!formas[forma]) {
+                    formas[forma] = {
+                        vendas: 0,
+                        valor: 0
+                    };
+                }
+                formas[forma].vendas += 1;
+                formas[forma].valor += venda.total || 0;
+            });
+
+            const container = document.getElementById('analiseFormaPagamento');
+            const totalVendas = vendas.length;
+            const totalValor = vendas.reduce((sum, v) => sum + (v.total || 0), 0);
+
+            if (totalVendas === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">Nenhuma venda encontrada</p>';
+                return;
+            }
+
+            container.innerHTML = Object.entries(formas).map(([forma, dados]) => {
+                const percentualVendas = ((dados.vendas / totalVendas) * 100).toFixed(1);
+                const percentualValor = ((dados.valor / totalValor) * 100).toFixed(1);
+                
+                return `
+                    <div class="ranking-item">
+                        <div>
+                            <strong>${forma}</strong>
+                        </div>
+                        <div>
+                            <span>${dados.vendas} vendas (${percentualVendas}%)</span>
+                            <span style="margin-left: 1rem; color: #28a745;">R$ ${dados.valor.toFixed(2)} (${percentualValor}%)</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function gerarGraficos(vendas) {
+            // Gráfico vendas por dia da semana
+            const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+            const vendasPorDia = new Array(7).fill(0);
+            
+            vendas.forEach(venda => {
+                if (!venda.dataVenda) return;
+                
+                let dataVenda;
+                if (venda.dataVenda.toDate) {
+                    dataVenda = venda.dataVenda.toDate();
+                } else {
+                    dataVenda = new Date(venda.dataVenda);
+                }
+                
+                const diaSemana = dataVenda.getDay();
+                vendasPorDia[diaSemana] += venda.total || 0;
+            });
+
+            if (graficoVendasDia) {
+                graficoVendasDia.destroy();
+            }
+
+            const ctx1 = document.getElementById('graficoVendasDiaSemana').getContext('2d');
+            graficoVendasDia = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: diasSemana,
+                    datasets: [{
+                        label: 'Vendas (R$)',
+                        data: vendasPorDia,
+                        backgroundColor: '#ff4500',
+                        borderColor: '#ff4500',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Gráfico vendas por categoria
+            const categorias = {};
+            
+            vendas.forEach(venda => {
+                if (venda.itens) {
+                    venda.itens.forEach(item => {
+                        // Buscar categoria do produto original
+                        const produto = produtosDisponiveis.find(p => p.id === item.produtoId);
+                        const categoria = produto ? produto.categoria : (item.categoria || 'Sem categoria');
+                        
+                        if (!categorias[categoria]) {
+                            categorias[categoria] = 0;
+                        }
+                        categorias[categoria] += item.subtotal || 0;
+                    });
+                }
+            });
+
+            if (graficoVendasCat) {
+                graficoVendasCat.destroy();
+            }
+
+            const ctx2 = document.getElementById('graficoVendasCategoria').getContext('2d');
+            graficoVendasCat = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categorias),
+                    datasets: [{
+                        data: Object.values(categorias),
+                        backgroundColor: ['#28a745', '#17a2b8', '#007bff', '#ffc107', '#dc3545', '#6c757d', '#ff4500']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function getFormaPagamentoTexto(forma) {
+            const formas = {
+                'credito': 'Cartão de Crédito',
+                'debito': 'Cartão de Débito',
+                'avista': 'Dinheiro/PIX',
+                'crediario': 'Crediário',
+                'retirada_interna': 'Retirada Interna'
+            };
+            return formas[forma] || forma || 'Não informado';
+        }
+
+        function limparFiltros() {
+            document.getElementById('dataInicio').value = '';
+            document.getElementById('dataFim').value = '';
+            
+            document.getElementById('rankingPecas').innerHTML = '<p style="text-align: center; color: #666;">Selecione um período para ver a análise</p>';
+            document.getElementById('rankingClientes').innerHTML = '<p style="text-align: center; color: #666;">Selecione um período para ver a análise</p>';
+            document.getElementById('rankingDias').innerHTML = '<p style="text-align: center; color: #666;">Selecione um período para ver a análise</p>';
+            document.getElementById('analiseFormaPagamento').innerHTML = '<p style="text-align: center; color: #666;">Selecione um período para ver a análise</p>';
+            
+            if (graficoVendasDia) {
+                graficoVendasDia.destroy();
+                graficoVendasDia = null;
+            }
+            if (graficoVendasCat) {
+                graficoVendasCat.destroy();
+                graficoVendasCat = null;
+            }
+        }
+    </script>
+</body>
+</html>
