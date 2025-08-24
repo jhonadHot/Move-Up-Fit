@@ -133,16 +133,29 @@
         
         .submenu-dashboard {
             display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
             background: white;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             padding: 1rem;
             margin-top: 0.5rem;
             z-index: 100;
+        }
+        
+        @media (min-width: 769px) {
+            .submenu-dashboard {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .submenu-dashboard {
+                position: relative;
+                width: 100%;
+                margin-top: 1rem;
+            }
         }
         
         .submenu-dashboard.show {
@@ -172,6 +185,25 @@
             .dashboard-grid {
                 grid-template-columns: 1fr;
                 padding: 0 1rem;
+            }
+            
+            .dashboard-card {
+                padding: 2.5rem 2rem;
+                min-height: 120px;
+            }
+            
+            .card-icon {
+                font-size: 3.5rem;
+                margin-bottom: 1.2rem;
+            }
+            
+            .dashboard-card h3 {
+                font-size: 1.8rem;
+                margin-bottom: 0.8rem;
+            }
+            
+            .dashboard-card p {
+                font-size: 1rem;
             }
         }
     </style>
