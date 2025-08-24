@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Peças - Sistema de Gestão</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="../assets/images/Move Up.png" alt="Move Up Fit">
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Início</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Cadastro</a>
+                    <ul class="submenu open">
+                        <li><a href="cadastro-marca.html">Fornecedor</a></li>
+                        <li><a href="cadastro-maquinas.html">Máquina de Cartão</a></li>
+                        <li><a href="cadastro-pecas.html">Peças</a></li>
+                    </ul>
+                </li>
+                <li><a href="estoque.html">Estoque</a></li>
+                <li id="menuUsuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Relatórios</a>
+                    <ul class="submenu">
+                        <li><a href="relatorio-financeiro.html">Financeiro</a></li>
+                        <li><a href="relatorio-vendas.html">Vendas</a></li>
+                    </ul>
+                </li>
+                <li><a href="vendas.html">Vendas</a></li>
+                <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <main class="main-content">
+        <div class="form-container" style="margin: 0 auto;">
+            <h1 style="text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #ff4500; font-weight: 300; font-size: 2.5rem; margin-bottom: 2rem;">Peças</h1>
+            
+            <form id="cadastroPecas">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="codigo">Código da Peça:</label>
+                        <input type="text" id="codigo" name="codigo" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nome">Nome da Peça:</label>
+                        <input type="text" id="nome" name="nome" required placeholder="Ex: Camiseta - M - Azul">
+                        <small style="color: #666; font-size: 0.9rem;">Formato: Nome - Tamanho - Cor</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="categoria">Categoria:</label>
+                        <select id="categoria" name="categoria" required>
+                            <option value="">Selecione...</option>
+                            <option value="camiseta">Camiseta</option>
+                            <option value="calca">Calça</option>
+                            <option value="vestido">Vestido</option>
+                            <option value="saia">Saia</option>
+                            <option value="blusa">Blusa</option>
+                            <option value="jaqueta">Jaqueta</option>
+                            <option value="shorts">Shorts</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="marca">Marca:</label>
+                        <div style="display: flex; gap: 10px;">
+                            <select id="marca" name="marca" style="flex: 1;" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                            <button type="button" class="btn" onclick="cadastrarMarca()" style="padding: 0.5rem;">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="precoFornecedor">Preço Fornecedor (R$):</label>
+                        <input type="number" id="precoFornecedor" name="precoFornecedor" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="porcentagem">Porcentagem (%):</label>
+                        <input type="number" id="porcentagem" name="porcentagem" step="0.01" min="0" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="preco">Preço Venda (R$):</label>
+                        <input type="number" id="preco" name="preco" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="estoque">Quantidade em Estoque:</label>
+                        <input type="number" id="estoque" name="estoque" min="0" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="descricao">Descrição:</label>
+                    <textarea id="descricao" name="descricao" rows="4" placeholder="Descrição detalhada da peça..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn">Cadastrar Peça</button>
+                    <button type="reset" class="btn btn-secondary">Limpar</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script>
+        let marcasCadastradas = [];
+        
+        // Carregar marcas do banco de dados
+        async function carregarMarcas() {
+            try {
+                marcasCadastradas = await FirebaseDatabase.obterMarcas();
+                const select = document.getElementById('marca');
+                
+                // Limpar opções existentes (exceto a primeira)
+                while (select.children.length > 1) {
+                    select.removeChild(select.lastChild);
+                }
+                
+                // Adicionar marcas do banco
+                marcasCadastradas.forEach(marca => {
+                    const option = document.createElement('option');
+                    option.value = marca.nomeMarca;
+                    option.text = marca.nomeMarca;
+                    select.add(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar marcas:', error);
+            }
+        }
+        
+        // Validar formato do nome da peça
+        function validarFormatoNome(nome) {
+            // Verificar se tem pelo menos 2 hífens
+            const partes = nome.split(' - ');
+            return partes.length >= 3 && partes.every(parte => parte.trim().length > 0);
+        }
+        
+        // Verificar autenticação e carregar marcas
+        firebase.auth().onAuthStateChanged(async function(user) {
+            if (!user) {
+                window.location.href = '../login.html';
+            } else {
+                const nivel = await FirebaseDatabase.obterNivelUsuario(user.uid);
+                if (nivel === 'master') {
+                    document.getElementById('menuUsuarios').style.display = 'block';
+                }
+                carregarMarcas();
+            }
+        });
+        
+        // Função de logout
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '../login.html';
+            });
+        }
+        const precoFornecedor = document.getElementById('precoFornecedor');
+        const porcentagem = document.getElementById('porcentagem');
+        const precoVenda = document.getElementById('preco');
+
+        function calcularPrecoVenda() {
+            const pFornecedor = parseFloat(precoFornecedor.value) || 0;
+            const pct = parseFloat(porcentagem.value) || 0;
+            const pVenda = pFornecedor * (1 + pct / 100);
+            precoVenda.value = pVenda.toFixed(2);
+        }
+
+        function calcularPorcentagem() {
+            const pFornecedor = parseFloat(precoFornecedor.value) || 0;
+            const pVenda = parseFloat(precoVenda.value) || 0;
+            if (pFornecedor > 0) {
+                const pct = ((pVenda - pFornecedor) / pFornecedor) * 100;
+                porcentagem.value = pct.toFixed(2);
+            }
+        }
+
+        precoFornecedor.addEventListener('input', calcularPrecoVenda);
+        porcentagem.addEventListener('input', calcularPrecoVenda);
+        precoVenda.addEventListener('input', calcularPorcentagem);
+
+        function cadastrarMarca() {
+            alert('Para cadastrar uma nova marca, acesse o menu "Cadastro de Peças" > "Cadastrar Marca"');
+        }
+
+        document.getElementById('cadastroPecas').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const nome = formData.get('nome');
+            
+            // Validar formato do nome
+            if (!validarFormatoNome(nome)) {
+                alert('Nome deve seguir o formato: Nome - Tamanho - Cor\nExemplo: Camiseta - M - Azul');
+                return;
+            }
+            
+            const peca = {
+                codigo: formData.get('codigo'),
+                nome: nome,
+                categoria: formData.get('categoria'),
+                marca: formData.get('marca'),
+                precoFornecedor: parseFloat(formData.get('precoFornecedor')),
+                porcentagem: parseFloat(formData.get('porcentagem')),
+                preco: parseFloat(formData.get('preco')),
+                estoque: parseInt(formData.get('estoque')),
+                descricao: formData.get('descricao'),
+                dataCadastro: new Date().toISOString()
+            };
+            
+            await FirebaseDatabase.salvarPeca(peca);
+            alert('Peça cadastrada com sucesso!');
+            this.reset();
+        });
+    </script>
+</body>
+</html>

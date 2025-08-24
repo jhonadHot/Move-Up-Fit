@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório Financeiro - Sistema de Gestão</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .filtros {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 0 auto 2rem auto;
+            width: 90%;
+            max-width: 1200px;
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .resumo-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .card h3 {
+            margin: 0 0 0.5rem 0;
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        .card .valor {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ff4500;
+        }
+        .graficos {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .grafico-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .grafico-container h3 {
+            margin: 0 0 1rem 0;
+            text-align: center;
+            color: #333;
+        }
+        .detalhes-table {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .detalhes-table th,
+        .detalhes-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .detalhes-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .detalhes-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .crediario-pendente {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 0 auto 2rem auto;
+            width: 90%;
+            max-width: 1200px;
+        }
+        .pendencia-item {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .pendencia-item:hover {
+            background-color: #f5f5f5;
+        }
+        .parcelas-detalhes {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+        .parcela-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            margin: 0.3rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .parcela-paga {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .parcela-pendente {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+        }
+        .btn-parcela {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-whatsapp {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            background-color: #25d366;
+            color: white;
+            margin-left: 0.5rem;
+        }
+        .btn-whatsapp:hover {
+            background-color: #1da851;
+        }
+        .valor-positivo {
+            color: #28a745;
+        }
+        .valor-negativo {
+            color: #dc3545;
+        }
+        @media (max-width: 768px) {
+            .filtros {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .graficos {
+                grid-template-columns: 1fr;
+            }
+            .resumo-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="../assets/images/Move Up.png" alt="Move Up Fit">
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <button class="menu-toggle" id="menuToggle">▶</button>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Início</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Cadastro</a>
+                    <ul class="submenu">
+                        <li><a href="cadastro-marca.html">Fornecedor</a></li>
+                        <li><a href="cadastro-maquinas.html">Máquina de Cartão</a></li>
+                        <li><a href="cadastro-pix.html">PIX</a></li>
+                        <li><a href="cadastro-pecas.html">Peças</a></li>
+                    </ul>
+                </li>
+                <li><a href="estoque.html">Estoque</a></li>
+                <li id="menuUsuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Relatórios</a>
+                    <ul class="submenu">
+                        <li><a href="relatorio-financeiro.html">Financeiro</a></li>
+                        <li><a href="relatorio-vendas.html">Vendas</a></li>
+                        <li><a href="relatorio-analitico.html">Analítico</a></li>
+                    </ul>
+                </li>
+                <li><a href="vendas.html">Vendas</a></li>
+                <li id="menuHistorico" style="display: none;"><a href="historico.html">Histórico de Ações</a></li>
+                <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <main class="main-content">
+        <h1 style="text-align: center; color: #ff4500; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 2.5rem; font-weight: 300; margin-bottom: 2rem;">Relatório Financeiro</h1>
+        
+        <div class="filtros">
+            <div class="form-group">
+                <label for="dataInicio">Data Início:</label>
+                <input type="date" id="dataInicio">
+            </div>
+            <div class="form-group">
+                <label for="dataFim">Data Fim:</label>
+                <input type="date" id="dataFim">
+            </div>
+            <div class="form-group">
+                <button class="btn" onclick="gerarRelatorio()">Gerar Relatório</button>
+                <button class="btn btn-secondary" onclick="limparFiltros()">Limpar</button>
+            </div>
+        </div>
+
+        <div class="resumo-cards">
+            <div class="card">
+                <h3>Valor do Estoque</h3>
+                <div class="valor valor-positivo" id="valorEstoque">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h3>Quantidade em Estoque</h3>
+                <div class="valor" id="quantidadeEstoque">0</div>
+            </div>
+            <div class="card">
+                <h3>Total Bruto</h3>
+                <div class="valor" id="totalBruto">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h3>Total Líquido</h3>
+                <div class="valor valor-positivo" id="totalLiquido">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h3>Quantidade de Vendas</h3>
+                <div class="valor" id="quantidadeVendas">0</div>
+            </div>
+        </div>
+        
+        <div class="resumo-cards">
+            <div class="card">
+                <h3>Dinheiro</h3>
+                <div class="valor valor-positivo" id="totalDinheiro">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h3>PIX</h3>
+                <div class="valor valor-positivo" id="totalPix">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h3>Cartão Débito</h3>
+                <div class="valor" id="totalDebito">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h3>Cartão Crédito</h3>
+                <div class="valor" id="totalCredito">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h3>Crediário Pendente</h3>
+                <div class="valor valor-negativo" id="totalCrediario">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h3>Retiradas Internas</h3>
+                <div class="valor valor-negativo" id="totalRetiradas">R$ 0,00</div>
+            </div>
+        </div>
+
+        <div class="graficos">
+            <div class="grafico-container">
+                <h3>Formas de Pagamento</h3>
+                <canvas id="graficoFormasPagamento"></canvas>
+            </div>
+            <div class="grafico-container">
+                <h3>Vendas por Período</h3>
+                <canvas id="graficoVendasPeriodo"></canvas>
+            </div>
+        </div>
+
+        <div class="crediario-pendente">
+            <h3>Crediário - Controle de Parcelas</h3>
+            <div id="listaCrediario">
+                <p style="text-align: center; color: #666;">Nenhum crediário pendente</p>
+            </div>
+        </div>
+        
+        <!-- Modal para pagamento de parcela -->
+        <div id="modalPagamento" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 8px; width: 400px;">
+                <h3>Registrar Pagamento</h3>
+                <div class="form-group">
+                    <label>Cliente:</label>
+                    <p id="clientePagamento" style="font-weight: bold;"></p>
+                </div>
+                <div class="form-group">
+                    <label>Parcela:</label>
+                    <p id="parcelaPagamento" style="font-weight: bold;"></p>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="radio" name="tipoPagamento" value="parcela" checked onchange="alterarTipoPagamento()"> Pagar parcela completa
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="radio" name="tipoPagamento" value="valor" onchange="alterarTipoPagamento()"> Pagar valor diferente
+                    </label>
+                </div>
+                <div class="form-group" id="valorDiferente" style="display: none;">
+                    <label for="valorPagamento">Valor a pagar (R$):</label>
+                    <input type="number" id="valorPagamento" step="0.01" min="0.01" placeholder="0,00">
+                </div>
+                <div class="form-group">
+                    <label for="formaPagamentoParcela">Forma de Pagamento:</label>
+                    <select id="formaPagamentoParcela" required>
+                        <option value="">Selecione...</option>
+                        <option value="dinheiro">Dinheiro</option>
+                        <option value="pix">PIX</option>
+                        <option value="debito">Cartão Débito</option>
+                    </select>
+                </div>
+                <div id="opcoesMaquina" style="display: none;">
+                    <div class="form-group">
+                        <label for="maquinaParcela">Máquina:</label>
+                        <select id="maquinaParcela">
+                            <option value="stone">Stone</option>
+                            <option value="mercadopago">Mercado Pago</option>
+                            <option value="pagseguro">PagSeguro</option>
+                            <option value="cielo">Cielo</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="text-align: right; margin-top: 1rem;">
+                    <button class="btn btn-secondary" onclick="fecharModalPagamento()">Cancelar</button>
+                    <button class="btn" onclick="confirmarPagamento()" style="margin-left: 0.5rem;">Confirmar Pagamento</button>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="text-align: center; margin-bottom: 1.5rem;">Detalhes das Vendas</h3>
+        <table class="detalhes-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>Forma Pagamento</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaDetalhes">
+                <tr>
+                    <td colspan="5" style="text-align: center;">Carregando...</td>
+                </tr>
+            </tbody>
+        </table>
+    </main>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/firebase-config.js?v=5"></script>
+    <script>
+        let todasVendas = [];
+        let pagamentosParcelas = [];
+        let maquinasDisponiveis = [];
+        let graficoFormas = null;
+        let graficoVendas = null;
+
+        // Verificar autenticação
+        firebase.auth().onAuthStateChanged(async function(user) {
+            if (!user) {
+                window.location.href = '../login.html';
+            } else {
+                const nivel = await FirebaseDatabase.obterNivelUsuario(user.uid);
+                if (nivel === 'master') {
+                    document.getElementById('menuUsuarios').style.display = 'block';
+                    document.getElementById('menuHistorico').style.display = 'block';
+                }
+                
+                // Definir datas padrão (último mês)
+                const hoje = new Date();
+                const mesPassado = new Date(hoje.getFullYear(), hoje.getMonth() - 1, hoje.getDate());
+                
+                document.getElementById('dataInicio').value = mesPassado.toISOString().split('T')[0];
+                document.getElementById('dataFim').value = hoje.toISOString().split('T')[0];
+                
+                gerarRelatorio();
+            }
+        });
+
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '../login.html';
+            });
+        }
+
+        async function gerarRelatorio() {
+            try {
+                const dataInicio = document.getElementById('dataInicio').value;
+                const dataFim = document.getElementById('dataFim').value;
+                
+                if (!dataInicio || !dataFim) {
+                    alert('Selecione as datas de início e fim');
+                    return;
+                }
+
+                // Carregar vendas, pagamentos de parcelas, máquinas e estoque
+                todasVendas = await FirebaseDatabase.obterVendas();
+                pagamentosParcelas = await FirebaseDatabase.obterPagamentosParcelas();
+                maquinasDisponiveis = await FirebaseDatabase.obterMaquinas();
+                
+                // Calcular valor do estoque
+                await calcularValorEstoque();
+                
+                // Filtrar por data
+                const vendasFiltradas = filtrarVendasPorData(todasVendas, dataInicio, dataFim);
+                
+                // Calcular resumos
+                calcularResumos(vendasFiltradas);
+                
+                // Gerar gráficos
+                gerarGraficos(vendasFiltradas);
+                
+                // Mostrar detalhes
+                mostrarDetalhes(vendasFiltradas);
+                
+                // Mostrar crediário pendente
+                mostrarCrediarioPendente(vendasFiltradas);
+                
+            } catch (error) {
+                console.error('Erro ao gerar relatório:', error);
+                alert('Erro ao gerar relatório');
+            }
+        }
+
+        function filtrarVendasPorData(vendas, dataInicio, dataFim) {
+            const inicio = new Date(dataInicio + 'T00:00:00');
+            const fim = new Date(dataFim + 'T23:59:59');
+            
+            return vendas.filter(venda => {
+                if (!venda.dataVenda) return false;
+                
+                let dataVenda;
+                if (venda.dataVenda.toDate) {
+                    dataVenda = venda.dataVenda.toDate();
+                } else {
+                    dataVenda = new Date(venda.dataVenda);
+                }
+                
+                return dataVenda >= inicio && dataVenda <= fim;
+            });
+        }
+
+        function calcularResumos(vendas) {
+            const dataInicio = document.getElementById('dataInicio').value;
+            const dataFim = document.getElementById('dataFim').value;
+            
+            let totalVendas = 0;
+            let totalDinheiro = 0;
+            let totalPix = 0;
+            let totalDebitoBruto = 0;
+            let totalDebitoLiquido = 0;
+            let totalCreditoBruto = 0;
+            let totalCreditoLiquido = 0;
+            let totalCrediarioPago = 0;
+            let totalCrediarioTotal = 0;
+            let totalRetiradas = 0;
+            let totalTaxas = 0;
+            
+            vendas.forEach(venda => {
+                const total = venda.total || 0;
+                totalVendas += total;
+                
+                const formaPagamento = venda.pagamento?.formaPagamento;
+                const saldoRestante = venda.saldoRestante || total;
+                
+                if (formaPagamento === 'retirada_interna') {
+                    totalRetiradas += total;
+                } else {
+                    switch (formaPagamento) {
+                        case 'avista':
+                            if (venda.pagamento?.tipo === 'pix') {
+                                totalPix += saldoRestante;
+                            } else {
+                                totalDinheiro += saldoRestante;
+                            }
+                            break;
+                        case 'debito':
+                            totalDebitoBruto += saldoRestante;
+                            if (venda.pagamento?.maquina) {
+                                const taxa = obterTaxaMaquina(venda.pagamento.maquina);
+                                const valorTaxa = saldoRestante * (taxa / 100);
+                                totalDebitoLiquido += saldoRestante - valorTaxa;
+                                totalTaxas += valorTaxa;
+                            } else {
+                                totalDebitoLiquido += saldoRestante;
+                            }
+                            break;
+                        case 'credito':
+                            // Para crédito, calcular parcelas que vencem no período
+                            const valorParcelaCredito = calcularParcelasNoPeriodo(venda, dataInicio, dataFim);
+                            totalCreditoBruto += valorParcelaCredito;
+                            if (venda.pagamento?.maquina) {
+                                const taxa = obterTaxaMaquina(venda.pagamento.maquina);
+                                const valorTaxa = valorParcelaCredito * (taxa / 100);
+                                totalCreditoLiquido += valorParcelaCredito - valorTaxa;
+                                totalTaxas += valorTaxa;
+                            } else {
+                                totalCreditoLiquido += valorParcelaCredito;
+                            }
+                            break;
+                        case 'crediario':
+                            // Para crediário, calcular apenas parcelas que vencem no período
+                            const valorParcelaCrediario = calcularParcelasNoPeriodo(venda, dataInicio, dataFim);
+                            
+                            // Calcular quanto já foi pago das parcelas que vencem no período
+                            const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                            let valorJaPagoNoPeriodo = 0;
+                            
+                            // Se há filtro de data, calcular pagamentos no período
+                            if (dataInicio && dataFim) {
+                                const inicio = new Date(dataInicio + 'T00:00:00');
+                                const fim = new Date(dataFim + 'T23:59:59');
+                                
+                                pagamentosVenda.forEach(pagamento => {
+                                    if (pagamento.dataPagamento) {
+                                        let dataPagamento;
+                                        if (pagamento.dataPagamento.toDate) {
+                                            dataPagamento = pagamento.dataPagamento.toDate();
+                                        } else {
+                                            dataPagamento = new Date(pagamento.dataPagamento);
+                                        }
+                                        
+                                        if (dataPagamento >= inicio && dataPagamento <= fim) {
+                                            // Somar no tipo correto baseado na forma de pagamento
+                                            switch (pagamento.formaPagamento) {
+                                                case 'dinheiro':
+                                                    totalDinheiro += pagamento.valor;
+                                                    break;
+                                                case 'pix':
+                                                    totalPix += pagamento.valor;
+                                                    break;
+                                                case 'debito':
+                                                    if (pagamento.maquina) {
+                                                        const taxa = obterTaxaMaquina(pagamento.maquina);
+                                                        const valorTaxa = pagamento.valor * (taxa / 100);
+                                                        totalDebitoLiquido += pagamento.valor - valorTaxa;
+                                                        totalDebitoBruto += pagamento.valor;
+                                                        totalTaxas += valorTaxa;
+                                                    } else {
+                                                        totalDebitoLiquido += pagamento.valor;
+                                                        totalDebitoBruto += pagamento.valor;
+                                                    }
+                                                    break;
+                                            }
+                                        }
+                                    }
+                                });
+                            } else {
+                                // Sem filtro de data, somar todos os pagamentos
+                                pagamentosVenda.forEach(pagamento => {
+                                    switch (pagamento.formaPagamento) {
+                                        case 'dinheiro':
+                                            totalDinheiro += pagamento.valor;
+                                            break;
+                                        case 'pix':
+                                            totalPix += pagamento.valor;
+                                            break;
+                                        case 'debito':
+                                            if (pagamento.maquina) {
+                                                const taxa = obterTaxaMaquina(pagamento.maquina);
+                                                const valorTaxa = pagamento.valor * (taxa / 100);
+                                                totalDebitoLiquido += pagamento.valor - valorTaxa;
+                                                totalDebitoBruto += pagamento.valor;
+                                                totalTaxas += valorTaxa;
+                                            } else {
+                                                totalDebitoLiquido += pagamento.valor;
+                                                totalDebitoBruto += pagamento.valor;
+                                            }
+                                            break;
+                                    }
+                                });
+                            }
+                            
+                            // O crediário mostra apenas o que vence no período (sem os pagamentos)
+                            totalCrediarioTotal += valorParcelaCrediario;
+                            break;
+                            
+                            // Se houver entrada e estiver no período, somar como pago
+                            if (venda.entrada && venda.entrada.valor > 0) {
+                                let dataVenda;
+                                if (venda.dataVenda && venda.dataVenda.toDate) {
+                                    dataVenda = venda.dataVenda.toDate();
+                                } else if (venda.dataVenda) {
+                                    dataVenda = new Date(venda.dataVenda);
+                                }
+                                
+                                if (dataVenda && dataInicio && dataFim) {
+                                    const inicio = new Date(dataInicio + 'T00:00:00');
+                                    const fim = new Date(dataFim + 'T23:59:59');
+                                    if (dataVenda >= inicio && dataVenda <= fim) {
+                                        totalCrediarioPago += venda.entrada.valor;
+                                    }
+                                } else if (!dataInicio && !dataFim) {
+                                    totalCrediarioPago += venda.entrada.valor;
+                                }
+                            }
+                            break;
+                    }
+                }
+                
+                // Somar entrada se houver
+                if (venda.entrada && venda.entrada.valor > 0) {
+                    const formaEntrada = venda.entrada.formaPagamento;
+                    switch (formaEntrada) {
+                        case 'avista':
+                            if (venda.entrada.tipo === 'pix') {
+                                totalPix += venda.entrada.valor;
+                            } else {
+                                totalDinheiro += venda.entrada.valor;
+                            }
+                            break;
+                        case 'debito':
+                            totalDebitoBruto += venda.entrada.valor;
+                            if (venda.entrada.maquina) {
+                                const taxa = obterTaxaMaquina(venda.entrada.maquina);
+                                const valorTaxa = venda.entrada.valor * (taxa / 100);
+                                totalDebitoLiquido += venda.entrada.valor - valorTaxa;
+                                totalTaxas += valorTaxa;
+                            } else {
+                                totalDebitoLiquido += venda.entrada.valor;
+                            }
+                            break;
+                    }
+                }
+            });
+            
+            const totalBruto = totalVendas;
+            const totalLiquido = totalVendas - totalTaxas;
+            
+            document.getElementById('totalDinheiro').textContent = `R$ ${totalDinheiro.toFixed(2)}`;
+            document.getElementById('totalPix').textContent = `R$ ${totalPix.toFixed(2)}`;
+            document.getElementById('totalDebito').innerHTML = `R$ ${totalDebitoBruto.toFixed(2)}<br><small style="color: #28a745;">R$ ${totalDebitoLiquido.toFixed(2)}</small>`;
+            document.getElementById('totalCredito').innerHTML = `R$ ${totalCreditoBruto.toFixed(2)}<br><small style="color: #28a745;">R$ ${totalCreditoLiquido.toFixed(2)}</small>`;
+            document.getElementById('totalCrediario').innerHTML = `R$ ${totalCrediarioPago.toFixed(2)}<br><small style="color: #dc3545;">A receber: R$ ${totalCrediarioTotal.toFixed(2)}</small>`;
+            document.getElementById('totalRetiradas').textContent = `R$ ${totalRetiradas.toFixed(2)}`;
+            document.getElementById('totalBruto').textContent = `R$ ${totalBruto.toFixed(2)}`;
+            document.getElementById('totalLiquido').textContent = `R$ ${totalLiquido.toFixed(2)}`;
+            document.getElementById('quantidadeVendas').textContent = vendas.length;
+        }
+
+        function gerarGraficos(vendas) {
+            const dataInicio = document.getElementById('dataInicio').value;
+            const dataFim = document.getElementById('dataFim').value;
+            
+            // Gráfico de formas de pagamento
+            const formasPagamento = {
+                'Dinheiro': 0,
+                'PIX': 0,
+                'Cartão Débito': 0,
+                'Cartão Crédito': 0,
+                'Crediário': 0,
+                'Retiradas Internas': 0
+            };
+            
+            vendas.forEach(venda => {
+                const formaPagamento = venda.pagamento?.formaPagamento;
+                const saldoRestante = venda.saldoRestante || venda.total || 0;
+                
+                if (formaPagamento === 'retirada_interna') {
+                    formasPagamento['Retiradas Internas'] += venda.total || 0;
+                } else {
+                    switch (formaPagamento) {
+                        case 'avista':
+                            if (venda.pagamento?.tipo === 'pix') {
+                                formasPagamento['PIX'] += saldoRestante;
+                            } else {
+                                formasPagamento['Dinheiro'] += saldoRestante;
+                            }
+                            break;
+                        case 'debito':
+                            if (venda.pagamento?.maquina) {
+                                const taxa = obterTaxaMaquina(venda.pagamento.maquina);
+                                const valorLiquido = saldoRestante - (saldoRestante * (taxa / 100));
+                                formasPagamento['Cartão Débito'] += valorLiquido;
+                            } else {
+                                formasPagamento['Cartão Débito'] += saldoRestante;
+                            }
+                            break;
+                        case 'credito':
+                            const valorParcelaCredito = calcularParcelasNoPeriodo(venda, dataInicio, dataFim);
+                            if (venda.pagamento?.maquina) {
+                                const taxa = obterTaxaMaquina(venda.pagamento.maquina);
+                                const valorLiquido = valorParcelaCredito - (valorParcelaCredito * (taxa / 100));
+                                formasPagamento['Cartão Crédito'] += valorLiquido;
+                            } else {
+                                formasPagamento['Cartão Crédito'] += valorParcelaCredito;
+                            }
+                            break;
+                        case 'crediario':
+                            // Para crediário, somar apenas os pagamentos recebidos no período
+                            const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                            
+                            if (dataInicio && dataFim) {
+                                const inicio = new Date(dataInicio + 'T00:00:00');
+                                const fim = new Date(dataFim + 'T23:59:59');
+                                
+                                pagamentosVenda.forEach(pagamento => {
+                                    if (pagamento.dataPagamento) {
+                                        let dataPagamento;
+                                        if (pagamento.dataPagamento.toDate) {
+                                            dataPagamento = pagamento.dataPagamento.toDate();
+                                        } else {
+                                            dataPagamento = new Date(pagamento.dataPagamento);
+                                        }
+                                        
+                                        if (dataPagamento >= inicio && dataPagamento <= fim) {
+                                            switch (pagamento.formaPagamento) {
+                                                case 'dinheiro':
+                                                    formasPagamento['Dinheiro'] += pagamento.valor;
+                                                    break;
+                                                case 'pix':
+                                                    formasPagamento['PIX'] += pagamento.valor;
+                                                    break;
+                                                case 'debito':
+                                                    if (pagamento.maquina) {
+                                                        const taxa = obterTaxaMaquina(pagamento.maquina);
+                                                        const valorLiquido = pagamento.valor - (pagamento.valor * (taxa / 100));
+                                                        formasPagamento['Cartão Débito'] += valorLiquido;
+                                                    } else {
+                                                        formasPagamento['Cartão Débito'] += pagamento.valor;
+                                                    }
+                                                    break;
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                            
+                            // Mostrar valor pendente no crediário
+                            const valorParcelaCrediario = calcularParcelasNoPeriodo(venda, dataInicio, dataFim);
+                            const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+                            const valorPendente = Math.max(0, valorParcelaCrediario - totalPago);
+                            formasPagamento['Crediário'] += valorPendente;
+                            break;
+                    }
+                }
+                
+                // Somar entrada
+                if (venda.entrada && venda.entrada.valor > 0) {
+                    const formaEntrada = venda.entrada.formaPagamento;
+                    switch (formaEntrada) {
+                        case 'avista':
+                            if (venda.entrada.tipo === 'pix') {
+                                formasPagamento['PIX'] += venda.entrada.valor;
+                            } else {
+                                formasPagamento['Dinheiro'] += venda.entrada.valor;
+                            }
+                            break;
+                        case 'debito':
+                            if (venda.entrada.maquina) {
+                                const taxa = obterTaxaMaquina(venda.entrada.maquina);
+                                const valorLiquido = venda.entrada.valor - (venda.entrada.valor * (taxa / 100));
+                                formasPagamento['Cartão Débito'] += valorLiquido;
+                            } else {
+                                formasPagamento['Cartão Débito'] += venda.entrada.valor;
+                            }
+                            break;
+                    }
+                }
+            });
+            
+            // Destruir gráfico anterior se existir
+            if (graficoFormas) {
+                graficoFormas.destroy();
+            }
+            
+            const ctx1 = document.getElementById('graficoFormasPagamento').getContext('2d');
+            graficoFormas = new Chart(ctx1, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(formasPagamento),
+                    datasets: [{
+                        data: Object.values(formasPagamento),
+                        backgroundColor: ['#28a745', '#17a2b8', '#007bff', '#ffc107', '#dc3545', '#6c757d']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: R$ ${value.toFixed(2)} (${percentage}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            display: true,
+                            formatter: function(value, context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return percentage > 5 ? `${percentage}%` : '';
+                            },
+                            color: '#fff',
+                            font: {
+                                weight: 'bold'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de vendas por período (últimos 7 dias)
+            const vendasPorDia = {};
+            const hoje = new Date();
+            
+            for (let i = 6; i >= 0; i--) {
+                const data = new Date(hoje);
+                data.setDate(data.getDate() - i);
+                const dataStr = data.toISOString().split('T')[0];
+                vendasPorDia[dataStr] = 0;
+            }
+            
+            vendas.forEach(venda => {
+                if (!venda.dataVenda) return;
+                
+                let dataVenda;
+                if (venda.dataVenda.toDate) {
+                    dataVenda = venda.dataVenda.toDate();
+                } else {
+                    dataVenda = new Date(venda.dataVenda);
+                }
+                
+                const dataStr = dataVenda.toISOString().split('T')[0];
+                if (vendasPorDia.hasOwnProperty(dataStr)) {
+                    vendasPorDia[dataStr] += venda.total || 0;
+                }
+            });
+            
+            // Destruir gráfico anterior se existir
+            if (graficoVendas) {
+                graficoVendas.destroy();
+            }
+            
+            const ctx2 = document.getElementById('graficoVendasPeriodo').getContext('2d');
+            graficoVendas = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(vendasPorDia).map(data => {
+                        const d = new Date(data + 'T00:00:00');
+                        return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                    }),
+                    datasets: [{
+                        label: 'Vendas (R$)',
+                        data: Object.values(vendasPorDia),
+                        borderColor: '#ff4500',
+                        backgroundColor: 'rgba(255, 69, 0, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function mostrarDetalhes(vendas) {
+            const tbody = document.getElementById('tabelaDetalhes');
+            
+            if (vendas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhuma venda encontrada</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = vendas.map(venda => {
+                let dataVenda = 'N/A';
+                if (venda.dataVenda) {
+                    if (venda.dataVenda.toDate) {
+                        dataVenda = venda.dataVenda.toDate().toLocaleDateString('pt-BR');
+                    } else {
+                        dataVenda = new Date(venda.dataVenda).toLocaleDateString('pt-BR');
+                    }
+                }
+                
+                const formaPagamento = getFormaPagamentoTexto(venda.pagamento?.formaPagamento);
+                const status = venda.pagamento?.formaPagamento === 'crediario' ? 'Pendente' : 'Pago';
+                
+                return `
+                    <tr>
+                        <td>${dataVenda}</td>
+                        <td>${venda.cliente?.nome || 'N/A'}</td>
+                        <td>${formaPagamento}</td>
+                        <td>R$ ${(venda.total || 0).toFixed(2)}</td>
+                        <td><span class="${status === 'Pendente' ? 'valor-negativo' : 'valor-positivo'}">${status}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function mostrarCrediarioPendente(vendas) {
+            const container = document.getElementById('listaCrediario');
+            const crediarios = vendas.filter(venda => venda.pagamento?.formaPagamento === 'crediario');
+            
+            if (crediarios.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">Nenhum crediário pendente</p>';
+                return;
+            }
+            
+            container.innerHTML = crediarios.map((venda, index) => {
+                const saldoRestante = venda.saldoRestante || venda.total || 0;
+                const parcelas = venda.pagamento?.parcelas || 1;
+                const valorParcela = saldoRestante / parcelas;
+                const dataPromessa = venda.dataPromessa;
+                
+                // Calcular total já pago
+                const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+                const saldoPendente = saldoRestante - totalPago;
+                
+                let parcelasHtml = '';
+                if (dataPromessa) {
+                    const dataBase = new Date(dataPromessa + 'T00:00:00');
+                    for (let i = 0; i < parcelas; i++) {
+                        const dataParcela = new Date(dataBase);
+                        dataParcela.setMonth(dataParcela.getMonth() + i);
+                        const dataFormatada = dataParcela.toLocaleDateString('pt-BR');
+                        
+                        // Verificar se parcela foi paga (totalmente)
+                        const pagamentosParcela = pagamentosParcelas.filter(p => 
+                            p.vendaId === venda.id && p.numeroParcela === (i + 1)
+                        );
+                        const valorPagoParcela = pagamentosParcela.reduce((sum, p) => sum + p.valor, 0);
+                        const paga = valorPagoParcela >= valorParcela;
+                        const valorRestanteParcela = valorParcela - valorPagoParcela;
+                        
+                        const statusClass = paga ? 'parcela-paga' : 'parcela-pendente';
+                        const statusTexto = paga ? 'Paga' : (valorPagoParcela > 0 ? `Parcial: R$ ${valorRestanteParcela.toFixed(2)}` : 'Pendente');
+                        const botaoTexto = paga ? 'Paga' : 'Marcar como Paga';
+                        const botaoWhatsApp = !paga && venda.cliente?.telefone ? 
+                            `<button class="btn-whatsapp" onclick="enviarWhatsApp('${venda.cliente.telefone}', '${venda.cliente.nome}', ${valorRestanteParcela.toFixed(2)}, '${dataFormatada}')" title="Enviar lembrete por WhatsApp">
+                                📱 WhatsApp
+                             </button>` : '';
+                        
+                        parcelasHtml += `
+                            <div class="parcela-item ${statusClass}">
+                                <div>
+                                    <strong>Parcela ${i + 1}/${parcelas}</strong><br>
+                                    <small>Vencimento: ${dataFormatada}</small>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                    <span>R$ ${valorParcela.toFixed(2)}</span>
+                                    <span style="font-size: 0.8rem; color: ${paga ? '#28a745' : '#856404'};">${statusTexto}</span>
+                                    ${!paga ? `<button class="btn-parcela" onclick="abrirModalPagamento('${venda.id}', ${i + 1}, '${venda.cliente?.nome}', ${valorParcela.toFixed(2)}, '${dataFormatada}')">${botaoTexto}</button>` : ''}
+                                    ${botaoWhatsApp}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                return `
+                    <div class="pendencia-item" onclick="toggleParcelas(${index})">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div>
+                                <strong>${venda.cliente?.nome || 'Cliente não informado'}</strong><br>
+                                <small>${parcelas}x parcelas de R$ ${valorParcela.toFixed(2)} | Pago: R$ ${totalPago.toFixed(2)}</small>
+                            </div>
+                            <div>
+                                <span class="valor-negativo">Pendente: R$ ${saldoPendente.toFixed(2)}</span>
+                                <span style="margin-left: 1rem; font-size: 0.8rem;">▼</span>
+                            </div>
+                        </div>
+                        <div class="parcelas-detalhes" id="parcelas-${index}">
+                            ${parcelasHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function obterTaxaMaquina(maquina, parcelas = 1, bandeira = 'visa') {
+            // Buscar máquina cadastrada
+            if (typeof maquinasDisponiveis !== 'undefined' && maquinasDisponiveis.length > 0) {
+                const maquinaEncontrada = maquinasDisponiveis.find(m => m.codigo === maquina);
+                if (maquinaEncontrada && maquinaEncontrada.bandeiras) {
+                    const taxasBandeira = maquinaEncontrada.bandeiras[bandeira];
+                    if (taxasBandeira) {
+                        if (parcelas === 1 && taxasBandeira.debito !== undefined) {
+                            return taxasBandeira.debito;
+                        }
+                        if (taxasBandeira[parcelas + 'x'] !== undefined) {
+                            return taxasBandeira[parcelas + 'x'];
+                        }
+                    }
+                }
+                
+                // Fallback para estrutura antiga
+                if (maquinaEncontrada) {
+                    if (maquinaEncontrada.taxasCredito && maquinaEncontrada.taxasCredito[parcelas + 'x']) {
+                        return maquinaEncontrada.taxasCredito[parcelas + 'x'];
+                    }
+                    return maquinaEncontrada.taxaDebito || 0;
+                }
+            }
+            
+            // Fallback para máquinas antigas
+            const taxas = {
+                'stone': 3.5,
+                'mercadopago': 4.2,
+                'pagseguro': 3.8,
+                'cielo': 3.9
+            };
+            return taxas[maquina] || 0;
+        }
+        
+        function calcularParcelasNoPeriodo(venda, dataInicio, dataFim) {
+            // Se não há filtro de data, retornar valor total
+            if (!dataInicio || !dataFim) {
+                return venda.saldoRestante || venda.total || 0;
+            }
+            
+            const parcelas = venda.pagamento?.parcelas || 1;
+            const dataPromessa = venda.dataPromessa;
+            const formaPagamento = venda.pagamento?.formaPagamento;
+            
+            console.log('Calculando parcelas:', {
+                cliente: venda.cliente?.nome,
+                formaPagamento,
+                parcelas,
+                dataPromessa,
+                saldoRestante: venda.saldoRestante,
+                total: venda.total
+            });
+            
+            // Se não há data promessa ou é à vista, usar data da venda
+            if (!dataPromessa || parcelas === 1) {
+                let dataVenda;
+                if (venda.dataVenda && venda.dataVenda.toDate) {
+                    dataVenda = venda.dataVenda.toDate();
+                } else if (venda.dataVenda) {
+                    dataVenda = new Date(venda.dataVenda);
+                } else {
+                    return 0;
+                }
+                
+                const inicio = new Date(dataInicio + 'T00:00:00');
+                const fim = new Date(dataFim + 'T23:59:59');
+                
+                if (dataVenda >= inicio && dataVenda <= fim) {
+                    return venda.saldoRestante || venda.total || 0;
+                }
+                return 0;
+            }
+            
+            // Calcular parcelas que vencem no período
+            const valorTotal = venda.saldoRestante || venda.total || 0;
+            const valorParcela = valorTotal / parcelas;
+            const dataBase = new Date(dataPromessa + 'T00:00:00');
+            const inicio = new Date(dataInicio + 'T00:00:00');
+            const fim = new Date(dataFim + 'T23:59:59');
+            
+            let valorNoPeriodo = 0;
+            let parcelasNoPeriodo = 0;
+            
+            console.log('Período:', dataInicio, 'a', dataFim);
+            console.log('Data base (1ª parcela):', dataPromessa);
+            console.log('Valor por parcela:', valorParcela);
+            
+            for (let i = 0; i < parcelas; i++) {
+                const dataParcela = new Date(dataBase);
+                dataParcela.setMonth(dataParcela.getMonth() + i);
+                
+                console.log(`Parcela ${i + 1}: ${dataParcela.toISOString().split('T')[0]}`);
+                
+                if (dataParcela >= inicio && dataParcela <= fim) {
+                    valorNoPeriodo += valorParcela;
+                    parcelasNoPeriodo++;
+                    console.log(`  -> Parcela ${i + 1} está no período`);
+                }
+            }
+            
+            console.log(`Total: ${parcelasNoPeriodo} parcelas = R$ ${valorNoPeriodo.toFixed(2)}`);
+            return valorNoPeriodo;
+        }
+        
+        function getFormaPagamentoTexto(forma) {
+            const formas = {
+                'credito': 'Cartão de Crédito',
+                'debito': 'Cartão de Débito',
+                'avista': 'Dinheiro/PIX',
+                'crediario': 'Crediário',
+                'retirada_interna': 'Retirada Interna'
+            };
+            return formas[forma] || forma || 'N/A';
+        }
+
+        function toggleParcelas(index) {
+            const detalhes = document.getElementById(`parcelas-${index}`);
+            if (detalhes.style.display === 'none' || !detalhes.style.display) {
+                detalhes.style.display = 'block';
+            } else {
+                detalhes.style.display = 'none';
+            }
+        }
+        
+        let parcelaAtual = null;
+        
+        function abrirModalPagamento(vendaId, numeroParcela, nomeCliente, valorParcela, dataVencimento) {
+            parcelaAtual = { vendaId, numeroParcela, valorParcela };
+            document.getElementById('clientePagamento').textContent = nomeCliente;
+            document.getElementById('parcelaPagamento').textContent = `${numeroParcela}ª parcela - R$ ${valorParcela} (Venc: ${dataVencimento})`;
+            document.getElementById('formaPagamentoParcela').value = '';
+            document.getElementById('opcoesMaquina').style.display = 'none';
+            document.querySelector('input[name="tipoPagamento"][value="parcela"]').checked = true;
+            document.getElementById('valorDiferente').style.display = 'none';
+            document.getElementById('valorPagamento').value = '';
+            document.getElementById('modalPagamento').style.display = 'block';
+        }
+        
+        function alterarTipoPagamento() {
+            const tipoPagamento = document.querySelector('input[name="tipoPagamento"]:checked').value;
+            const valorDiferente = document.getElementById('valorDiferente');
+            
+            if (tipoPagamento === 'valor') {
+                valorDiferente.style.display = 'block';
+                document.getElementById('valorPagamento').focus();
+            } else {
+                valorDiferente.style.display = 'none';
+            }
+        }
+        
+        function fecharModalPagamento() {
+            document.getElementById('modalPagamento').style.display = 'none';
+            parcelaAtual = null;
+        }
+        
+        async function confirmarPagamento() {
+            const formaPagamento = document.getElementById('formaPagamentoParcela').value;
+            if (!formaPagamento) {
+                alert('Selecione a forma de pagamento!');
+                return;
+            }
+            
+            const tipoPagamento = document.querySelector('input[name="tipoPagamento"]:checked').value;
+            let valorPagar;
+            
+            if (tipoPagamento === 'valor') {
+                valorPagar = parseFloat(document.getElementById('valorPagamento').value);
+                if (!valorPagar || valorPagar <= 0) {
+                    alert('Digite um valor válido!');
+                    return;
+                }
+            } else {
+                valorPagar = parcelaAtual.valorParcela;
+            }
+            
+            let maquina = null;
+            if (formaPagamento === 'debito') {
+                maquina = document.getElementById('maquinaParcela').value;
+            }
+            
+            try {
+                // Buscar venda para calcular distribuição do pagamento
+                const venda = todasVendas.find(v => v.id === parcelaAtual.vendaId);
+                if (!venda) {
+                    alert('Venda não encontrada!');
+                    return;
+                }
+                
+                const parcelas = venda.pagamento?.parcelas || 1;
+                const valorParcela = (venda.saldoRestante || venda.total) / parcelas;
+                
+                // Calcular quais parcelas serão pagas
+                const pagamentosExistentes = pagamentosParcelas.filter(p => p.vendaId === parcelaAtual.vendaId);
+                let valorRestante = valorPagar;
+                const novosPagamentos = [];
+                
+                for (let i = 1; i <= parcelas && valorRestante > 0; i++) {
+                    const jaPaga = pagamentosExistentes.some(p => p.numeroParcela === i);
+                    if (!jaPaga) {
+                        const valorParaParcela = Math.min(valorRestante, valorParcela);
+                        novosPagamentos.push({
+                            vendaId: parcelaAtual.vendaId,
+                            numeroParcela: i,
+                            valor: valorParaParcela,
+                            formaPagamento: formaPagamento,
+                            maquina: maquina,
+                            valorOriginalParcela: valorParcela
+                        });
+                        valorRestante -= valorParaParcela;
+                    }
+                }
+                
+                // Salvar todos os pagamentos
+                for (const pagamento of novosPagamentos) {
+                    await FirebaseDatabase.registrarPagamentoParcela(pagamento);
+                }
+                
+                alert(`Pagamento de R$ ${valorPagar.toFixed(2)} registrado com sucesso!\n${novosPagamentos.length} parcela(s) afetada(s).`);
+                fecharModalPagamento();
+                gerarRelatorio(); // Recarregar relatório
+            } catch (error) {
+                console.error('Erro ao registrar pagamento:', error);
+                alert('Erro ao registrar pagamento.');
+            }
+        }
+        
+        // Mostrar/esconder opções de máquina
+        document.getElementById('formaPagamentoParcela').addEventListener('change', function() {
+            const opcoesMaquina = document.getElementById('opcoesMaquina');
+            if (this.value === 'debito') {
+                opcoesMaquina.style.display = 'block';
+            } else {
+                opcoesMaquina.style.display = 'none';
+            }
+        });
+        
+        async function calcularValorEstoque() {
+            try {
+                const pecas = await FirebaseDatabase.obterPecas();
+                let valorTotal = 0;
+                let quantidadeTotal = 0;
+                
+                pecas.forEach(peca => {
+                    const estoque = peca.estoque || 0;
+                    const preco = peca.preco || 0;
+                    valorTotal += (estoque * preco);
+                    quantidadeTotal += estoque;
+                });
+                
+                document.getElementById('valorEstoque').textContent = `R$ ${valorTotal.toFixed(2)}`;
+                document.getElementById('quantidadeEstoque').textContent = quantidadeTotal;
+            } catch (error) {
+                console.error('Erro ao calcular valor do estoque:', error);
+                document.getElementById('valorEstoque').textContent = 'R$ 0,00';
+                document.getElementById('quantidadeEstoque').textContent = '0';
+            }
+        }
+        
+        async function enviarWhatsApp(telefone, nomeCliente, valorDevido, dataVencimento) {
+            // Limpar telefone (remover caracteres especiais)
+            const telefoneFormatado = telefone.replace(/\D/g, '');
+            
+            // Verificar se telefone é válido
+            if (telefoneFormatado.length < 10) {
+                alert('Telefone do cliente inválido ou não cadastrado!');
+                return;
+            }
+            
+            // Buscar PIX cadastrado
+            let chavePix = 'PIX não cadastrado';
+            try {
+                const pixData = await FirebaseDatabase.obterPixPrincipal();
+                if (pixData && pixData.chave) {
+                    chavePix = pixData.chave;
+                }
+            } catch (error) {
+                console.error('Erro ao buscar PIX:', error);
+            }
+            
+            // Mensagem personalizada
+            const mensagem = `👊 *MOVE UP FIT* 👊
+
+Olá ${nomeCliente}! 😊
+
+Esperamos que esteja bem!
+
+Gostaríamos de lembrá-lo(a) sobre o pagamento pendente:
+💰 Valor: R$ ${valorDevido}
+📅 Vencimento: ${dataVencimento}
+
+Para sua comodidade, aceitamos:
+💵 Dinheiro
+📱 PIX: ${chavePix}
+
+Qualquer dúvida, estamos à disposição!
+
+Atenciosamente,
+Move Up Fit`;
+            
+            // Codificar mensagem para URL
+            const mensagemCodificada = encodeURIComponent(mensagem);
+            
+            // Abrir WhatsApp
+            const url = `https://wa.me/55${telefoneFormatado}?text=${mensagemCodificada}`;
+            window.open(url, '_blank');
+        }
+        
+        function limparFiltros() {
+            document.getElementById('dataInicio').value = '';
+            document.getElementById('dataFim').value = '';
+            
+            // Limpar dados
+            document.getElementById('totalVendas').textContent = 'R$ 0,00';
+            document.getElementById('totalDinheiro').textContent = 'R$ 0,00';
+            document.getElementById('totalDebito').innerHTML = 'R$ 0,00';
+            document.getElementById('totalCredito').innerHTML = 'R$ 0,00';
+            document.getElementById('totalCrediario').innerHTML = 'R$ 0,00';
+            document.getElementById('totalRetiradas').textContent = 'R$ 0,00';
+            document.getElementById('totalBruto').textContent = 'R$ 0,00';
+            document.getElementById('totalLiquido').textContent = 'R$ 0,00';
+            document.getElementById('quantidadeVendas').textContent = '0';
+            document.getElementById('valorEstoque').textContent = 'R$ 0,00';
+            document.getElementById('quantidadeEstoque').textContent = '0';
+            
+            document.getElementById('tabelaDetalhes').innerHTML = '<tr><td colspan="5" style="text-align: center;">Selecione um período</td></tr>';
+            document.getElementById('listaCrediario').innerHTML = '<p style="text-align: center; color: #666;">Selecione um período</p>';
+            
+            // Destruir gráficos
+            if (graficoFormas) {
+                graficoFormas.destroy();
+                graficoFormas = null;
+            }
+            if (graficoVendas) {
+                graficoVendas.destroy();
+                graficoVendas = null;
+            }
+        }
+    </script>
+</body>
+</html>

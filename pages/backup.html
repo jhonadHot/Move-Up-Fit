@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup - Sistema de Gestão</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="../assets/images/Move Up.png" alt="Move Up Fit">
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Início</a></li>
+                <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <main class="main-content" style="margin-top: 150px;">
+        <h1 style="text-align: center; color: #ff4500; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 2.5rem; font-weight: 300; margin-bottom: 2rem;">Backup do Sistema</h1>
+        
+        <div style="max-width: 800px; margin: 0 auto;">
+            <!-- Status do Backup -->
+            <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+                <h3 style="color: #ff4500; margin-bottom: 1rem;">Status do Sistema</h3>
+                <div id="statusBackup">
+                    <p>Verificando dados...</p>
+                </div>
+            </div>
+
+            <!-- Backup Manual -->
+            <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+                <h3 style="color: #ff4500; margin-bottom: 1rem;">Backup Manual</h3>
+                <p style="margin-bottom: 1.5rem; color: #666;">Faça o download de todos os dados do sistema em formato JSON.</p>
+                
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button class="btn" onclick="fazerBackupCompleto()">📦 Backup Completo</button>
+                    <button class="btn btn-secondary" onclick="fazerBackupVendas()">💰 Apenas Vendas</button>
+                    <button class="btn btn-secondary" onclick="fazerBackupEstoque()">📋 Apenas Estoque</button>
+                </div>
+                
+                <div id="progressoBackup" style="display: none; margin-top: 1rem;">
+                    <div style="background: #f0f0f0; border-radius: 10px; overflow: hidden;">
+                        <div id="barraProgresso" style="background: #ff4500; height: 20px; width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                    <p id="textoProgresso" style="margin-top: 0.5rem; text-align: center;">Preparando backup...</p>
+                </div>
+            </div>
+
+            <!-- Restaurar Backup -->
+            <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <h3 style="color: #dc3545; margin-bottom: 1rem;">⚠️ Restaurar Backup</h3>
+                <p style="margin-bottom: 1.5rem; color: #666;">Cuidado! Esta ação substitui todos os dados atuais.</p>
+                
+                <div class="form-group">
+                    <label for="arquivoBackup">Selecionar arquivo de backup:</label>
+                    <input type="file" id="arquivoBackup" accept=".json" style="margin-bottom: 1rem;">
+                </div>
+                
+                <button class="btn" onclick="restaurarBackup()" style="background: #dc3545;">🔄 Restaurar Dados</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script>
+        // Verificação de segurança rigorosa
+        firebase.auth().onAuthStateChanged(async function(user) {
+            if (!user) {
+                console.warn('Tentativa de acesso não autenticado à página de backup');
+                window.location.href = '../login.html';
+                return;
+            }
+            
+            try {
+                const nivel = await FirebaseDatabase.obterNivelUsuario(user.uid);
+                
+                // Verificação dupla de segurança
+                if (nivel !== 'master' || user.email !== 'jhonatann.andrade@gmail.com') {
+                    console.warn(`Tentativa de acesso não autorizado por: ${user.email}`);
+                    alert('🚫 ACESSO NEGADO\n\nApenas o usuário master pode acessar backups.\nEsta tentativa foi registrada.');
+                    
+                    // Registrar tentativa de acesso não autorizado
+                    await FirebaseDatabase.registrarHistorico(
+                        'TENTATIVA_ACESSO_BACKUP',
+                        { 
+                            email: user.email,
+                            nivel: nivel,
+                            ip: 'local',
+                            timestamp: new Date().toISOString()
+                        },
+                        user.email
+                    );
+                    
+                    window.location.href = '../index.html';
+                    return;
+                }
+                
+                console.log('Acesso autorizado ao backup por usuário master');
+                verificarStatusSistema();
+                
+            } catch (error) {
+                console.error('Erro na verificação de segurança:', error);
+                window.location.href = '../login.html';
+            }
+        });
+
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '../login.html';
+            });
+        }
+
+        async function verificarStatusSistema() {
+            try {
+                const vendas = await FirebaseDatabase.obterVendas();
+                const pecas = await FirebaseDatabase.obterPecas();
+                const usuarios = await FirebaseDatabase.obterUsuarios();
+                
+                document.getElementById('statusBackup').innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                            <h4 style="margin: 0; color: #ff4500;">Vendas</h4>
+                            <p style="margin: 0.5rem 0 0 0; font-size: 1.5rem; font-weight: bold;">${vendas.length}</p>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                            <h4 style="margin: 0; color: #ff4500;">Produtos</h4>
+                            <p style="margin: 0.5rem 0 0 0; font-size: 1.5rem; font-weight: bold;">${pecas.length}</p>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                            <h4 style="margin: 0; color: #ff4500;">Usuários</h4>
+                            <p style="margin: 0.5rem 0 0 0; font-size: 1.5rem; font-weight: bold;">${usuarios.length}</p>
+                        </div>
+                    </div>
+                    <p style="margin-top: 1rem; color: #28a745; text-align: center;">✅ Sistema funcionando normalmente</p>
+                `;
+            } catch (error) {
+                document.getElementById('statusBackup').innerHTML = `
+                    <p style="color: #dc3545; text-align: center;">❌ Erro ao verificar sistema: ${error.message}</p>
+                `;
+            }
+        }
+
+        async function fazerBackupCompleto() {
+            mostrarProgresso();
+            
+            try {
+                // Log de segurança
+                const user = firebase.auth().currentUser;
+                await FirebaseDatabase.registrarHistorico(
+                    'BACKUP_COMPLETO_INICIADO',
+                    { 
+                        usuario: user.email,
+                        timestamp: new Date().toISOString()
+                    },
+                    user.email
+                );
+                
+                atualizarProgresso(10, 'Coletando vendas...');
+                const vendas = await FirebaseDatabase.obterVendas();
+                
+                atualizarProgresso(30, 'Coletando produtos...');
+                const pecas = await FirebaseDatabase.obterPecas();
+                
+                atualizarProgresso(50, 'Coletando usuários...');
+                const usuarios = await FirebaseDatabase.obterUsuarios();
+                
+                atualizarProgresso(70, 'Coletando máquinas...');
+                const maquinas = await FirebaseDatabase.obterMaquinas();
+                
+                atualizarProgresso(90, 'Gerando arquivo...');
+                
+                const backup = {
+                    dataBackup: new Date().toISOString(),
+                    versao: '1.0',
+                    dados: {
+                        vendas: vendas,
+                        pecas: pecas,
+                        usuarios: usuarios,
+                        maquinas: maquinas
+                    }
+                };
+                
+                // Verificação de integridade
+                const totalRegistros = vendas.length + pecas.length + usuarios.length + maquinas.length;
+                backup.metadados = {
+                    totalRegistros: totalRegistros,
+                    checksum: btoa(JSON.stringify(backup.dados)).length,
+                    usuario: firebase.auth().currentUser.email
+                };
+                
+                atualizarProgresso(100, 'Finalizando...');
+                baixarArquivo(backup, 'backup-completo');
+                
+                // Log de conclusão
+                await FirebaseDatabase.registrarHistorico(
+                    'BACKUP_COMPLETO_CONCLUIDO',
+                    { 
+                        totalRegistros: totalRegistros,
+                        usuario: user.email
+                    },
+                    user.email
+                );
+                
+            } catch (error) {
+                alert('Erro ao fazer backup: ' + error.message);
+            } finally {
+                esconderProgresso();
+            }
+        }
+
+        async function fazerBackupVendas() {
+            mostrarProgresso();
+            
+            try {
+                atualizarProgresso(50, 'Coletando vendas...');
+                const vendas = await FirebaseDatabase.obterVendas();
+                
+                const backup = {
+                    dataBackup: new Date().toISOString(),
+                    tipo: 'vendas',
+                    dados: { vendas: vendas }
+                };
+                
+                atualizarProgresso(100, 'Finalizando...');
+                baixarArquivo(backup, 'backup-vendas');
+                
+            } catch (error) {
+                alert('Erro ao fazer backup: ' + error.message);
+            } finally {
+                esconderProgresso();
+            }
+        }
+
+        async function fazerBackupEstoque() {
+            mostrarProgresso();
+            
+            try {
+                atualizarProgresso(50, 'Coletando produtos...');
+                const pecas = await FirebaseDatabase.obterPecas();
+                
+                const backup = {
+                    dataBackup: new Date().toISOString(),
+                    tipo: 'estoque',
+                    dados: { pecas: pecas }
+                };
+                
+                atualizarProgresso(100, 'Finalizando...');
+                baixarArquivo(backup, 'backup-estoque');
+                
+            } catch (error) {
+                alert('Erro ao fazer backup: ' + error.message);
+            } finally {
+                esconderProgresso();
+            }
+        }
+
+        function baixarArquivo(dados, nome) {
+            const dataStr = JSON.stringify(dados, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `${nome}-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            alert('Backup realizado com sucesso!');
+        }
+
+        function mostrarProgresso() {
+            document.getElementById('progressoBackup').style.display = 'block';
+        }
+
+        function esconderProgresso() {
+            document.getElementById('progressoBackup').style.display = 'none';
+            atualizarProgresso(0, 'Preparando backup...');
+        }
+
+        function atualizarProgresso(porcentagem, texto) {
+            document.getElementById('barraProgresso').style.width = porcentagem + '%';
+            document.getElementById('textoProgresso').textContent = texto;
+        }
+
+        async function restaurarBackup() {
+            const arquivo = document.getElementById('arquivoBackup').files[0];
+            
+            if (!arquivo) {
+                alert('Selecione um arquivo de backup primeiro!');
+                return;
+            }
+
+            if (!confirm('ATENÇÃO: Esta ação irá substituir TODOS os dados atuais. Tem certeza?')) {
+                return;
+            }
+
+            if (!confirm('Última confirmação: Todos os dados serão perdidos. Continuar?')) {
+                return;
+            }
+
+            try {
+                const texto = await arquivo.text();
+                const backup = JSON.parse(texto);
+                
+                alert('Funcionalidade de restauração será implementada em versão futura por segurança.');
+                
+            } catch (error) {
+                alert('Erro ao ler arquivo: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

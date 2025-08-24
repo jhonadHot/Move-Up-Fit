@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro PIX - Sistema de Gestão</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="../assets/images/Move Up.png" alt="Move Up Fit">
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Início</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Cadastro</a>
+                    <ul class="submenu">
+                        <li><a href="cadastro-marca.html">Fornecedor</a></li>
+                        <li><a href="cadastro-maquinas.html">Máquina de Cartão</a></li>
+                        <li><a href="cadastro-pix.html">PIX</a></li>
+                        <li><a href="cadastro-pecas.html">Peças</a></li>
+                    </ul>
+                </li>
+                <li><a href="estoque.html">Estoque</a></li>
+                <li id="menuUsuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Relatórios</a>
+                    <ul class="submenu">
+                        <li><a href="relatorio-financeiro.html">Financeiro</a></li>
+                        <li><a href="relatorio-vendas.html">Vendas</a></li>
+                        <li><a href="relatorio-analitico.html">Analítico</a></li>
+                    </ul>
+                </li>
+                <li><a href="vendas.html">Vendas</a></li>
+                <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <main class="main-content" style="margin-top: 150px;">
+        <h1 style="text-align: center; color: #ff4500; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 2.5rem; font-weight: 300; margin-bottom: 2rem;">PIX</h1>
+        
+        <div style="max-width: 800px; margin: 0 auto;">
+            <!-- Formulário de Cadastro -->
+            <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+                <form id="formPix">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tipoPix">Tipo de Chave PIX: <span style="color: red;">*</span></label>
+                            <select id="tipoPix" required onchange="mostrarCampoChave()">
+                                <option value="">Selecione...</option>
+                                <option value="cpf">CPF</option>
+                                <option value="cnpj">CNPJ</option>
+                                <option value="email">E-mail</option>
+                                <option value="telefone">Telefone</option>
+                                <option value="aleatoria">Chave Aleatória</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="chavePix">Chave PIX: <span style="color: red;">*</span></label>
+                            <input type="text" id="chavePix" placeholder="Digite a chave PIX" required>
+                            <small id="dicaChave" style="color: #666; display: none;"></small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nomeTitular">Nome do Titular: <span style="color: red;">*</span></label>
+                            <input type="text" id="nomeTitular" placeholder="Nome completo do titular" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="banco">Banco:</label>
+                            <input type="text" id="banco" placeholder="Nome do banco">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="descricaoPix">Descrição:</label>
+                        <input type="text" id="descricaoPix" placeholder="Ex: PIX Principal, PIX Loja, etc.">
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <button type="submit" class="btn">Cadastrar PIX</button>
+                        <button type="button" class="btn btn-secondary" onclick="limparFormulario()">Limpar</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de PIX Cadastrados -->
+            <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <h3 style="text-align: center; margin-bottom: 1.5rem; color: #333;">PIX Cadastrados</h3>
+                <div id="listaPix">
+                    <p style="text-align: center; color: #666;">Carregando...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/firebase-config.js?v=7"></script>
+    <script>
+        // Aguardar QRious estar pronto
+        function aguardarQRCode() {
+            return new Promise((resolve) => {
+                if (typeof QRious !== 'undefined') {
+                    console.log('QRious library ready');
+                    resolve();
+                } else {
+                    console.log('Waiting for QRious library...');
+                    setTimeout(() => aguardarQRCode().then(resolve), 100);
+                }
+            });
+        }
+
+        // Aguardar Firebase estar pronto
+        function aguardarFirebase() {
+            return new Promise((resolve) => {
+                if (typeof FirebaseDatabase !== 'undefined' && FirebaseDatabase.cadastrarPix) {
+                    resolve();
+                } else {
+                    setTimeout(() => aguardarFirebase().then(resolve), 100);
+                }
+            });
+        }
+
+        // Verificar autenticação
+        firebase.auth().onAuthStateChanged(async function(user) {
+            if (!user) {
+                window.location.href = '../login.html';
+            } else {
+                await aguardarFirebase();
+                await aguardarQRCode();
+                const nivel = await FirebaseDatabase.obterNivelUsuario(user.uid);
+                if (nivel === 'master') {
+                    document.getElementById('menuUsuarios').style.display = 'block';
+                }
+                carregarPix();
+            }
+        });
+
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '../login.html';
+            });
+        }
+
+        function mostrarCampoChave() {
+            const tipo = document.getElementById('tipoPix').value;
+            const chavePix = document.getElementById('chavePix');
+            const dicaChave = document.getElementById('dicaChave');
+            
+            // Limpar campo
+            chavePix.value = '';
+            chavePix.placeholder = 'Digite a chave PIX';
+            dicaChave.style.display = 'none';
+            
+            // Configurar campo baseado no tipo
+            switch(tipo) {
+                case 'cpf':
+                    chavePix.placeholder = '000.000.000-00';
+                    dicaChave.textContent = 'Digite apenas números do CPF';
+                    dicaChave.style.display = 'block';
+                    break;
+                case 'cnpj':
+                    chavePix.placeholder = '00.000.000/0000-00';
+                    dicaChave.textContent = 'Digite apenas números do CNPJ';
+                    dicaChave.style.display = 'block';
+                    break;
+                case 'email':
+                    chavePix.placeholder = 'exemplo@email.com';
+                    dicaChave.textContent = 'Digite um e-mail válido';
+                    dicaChave.style.display = 'block';
+                    break;
+                case 'telefone':
+                    chavePix.placeholder = '(00) 00000-0000';
+                    dicaChave.textContent = 'Digite com DDD';
+                    dicaChave.style.display = 'block';
+                    break;
+                case 'aleatoria':
+                    chavePix.placeholder = 'Chave aleatória gerada pelo banco';
+                    dicaChave.textContent = 'Cole a chave aleatória fornecida pelo seu banco';
+                    dicaChave.style.display = 'block';
+                    break;
+            }
+        }
+
+        function validarChavePix(tipo, chave) {
+            switch(tipo) {
+                case 'cpf':
+                    const cpf = chave.replace(/\D/g, '');
+                    return cpf.length === 11;
+                case 'cnpj':
+                    const cnpj = chave.replace(/\D/g, '');
+                    return cnpj.length === 14;
+                case 'email':
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    return emailRegex.test(chave);
+                case 'telefone':
+                    const telefone = chave.replace(/\D/g, '');
+                    return telefone.length === 11;
+                case 'aleatoria':
+                    return chave.length >= 10;
+                default:
+                    return false;
+            }
+        }
+
+        async function carregarPix() {
+            try {
+                const pixList = await FirebaseDatabase.obterPix();
+                exibirPix(pixList);
+            } catch (error) {
+                console.error('Erro ao carregar PIX:', error);
+                document.getElementById('listaPix').innerHTML = '<p style="text-align: center; color: #dc3545;">Erro ao carregar PIX</p>';
+            }
+        }
+
+        function exibirPix(pixList) {
+            const container = document.getElementById('listaPix');
+            
+            if (pixList.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">Nenhum PIX cadastrado</p>';
+                return;
+            }
+
+            container.innerHTML = pixList.map(pix => `
+                <div style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${pix.descricao || 'PIX'}</strong><br>
+                        <small><strong>Tipo:</strong> ${getTipoTexto(pix.tipo)}</small><br>
+                        <small><strong>Chave:</strong> ${pix.chave}</small><br>
+                        <small><strong>Titular:</strong> ${pix.titular}</small>
+                        ${pix.banco ? `<br><small><strong>Banco:</strong> ${pix.banco}</small>` : ''}
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button class="btn btn-secondary" onclick="mostrarChavePix('${pix.chave}')" style="padding: 0.5rem;">
+                            📱 Mostrar PIX
+                        </button>
+                        <button class="btn" onclick="editarPix('${pix.id}')" style="padding: 0.5rem; background: #ffc107;">
+                            ✏️ Editar
+                        </button>
+                        <button class="btn" onclick="excluirPix('${pix.id}')" style="padding: 0.5rem; background: #dc3545;">
+                            🗑️ Excluir
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getTipoTexto(tipo) {
+            const tipos = {
+                'cpf': 'CPF',
+                'cnpj': 'CNPJ',
+                'email': 'E-mail',
+                'telefone': 'Telefone',
+                'aleatoria': 'Chave Aleatória'
+            };
+            return tipos[tipo] || tipo;
+        }
+
+        function mostrarChavePix(chave) {
+            // Criar modal para mostrar chave PIX
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); z-index: 2000; display: flex;
+                justify-content: center; align-items: center;
+            `;
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white; padding: 2rem; border-radius: 8px;
+                text-align: center; max-width: 400px;
+            `;
+            
+            modalContent.innerHTML = `
+                <h3>Chave PIX</h3>
+                <div style="margin: 1.5rem 0;">
+                    <div style="background: #f8f9fa; border: 2px solid #007bff; border-radius: 8px; padding: 1rem;">
+                        <p style="margin: 0; font-size: 1.1rem; font-weight: bold; color: #007bff;">Chave PIX:</p>
+                        <p style="margin: 0.5rem 0 0 0; font-family: monospace; font-size: 1rem; word-break: break-all; background: white; padding: 0.8rem; border: 1px solid #ddd; border-radius: 4px;">${chave}</p>
+                    </div>
+                    <p style="margin-top: 1rem; color: #666; font-size: 0.9rem;">Copie esta chave para receber pagamentos via PIX</p>
+                </div>
+                <div>
+                    <button onclick="copiarChavePix('${chave}')" class="btn" style="margin-right: 0.5rem;">📋 Copiar Chave</button>
+                    <button onclick="document.body.removeChild(document.querySelector('.modal-pix'))" class="btn btn-secondary">Fechar</button>
+                </div>
+            `;
+            
+            modal.className = 'modal-pix';
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+        
+        function copiarChavePix(chave) {
+            try {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(chave).then(() => {
+                        alert('Chave PIX copiada!');
+                    }).catch(() => {
+                        // Fallback
+                        const textarea = document.createElement('textarea');
+                        textarea.value = chave;
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textarea);
+                        alert('Chave PIX copiada!');
+                    });
+                } else {
+                    // Fallback para navegadores antigos
+                    const textarea = document.createElement('textarea');
+                    textarea.value = chave;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    alert('Chave PIX copiada!');
+                }
+            } catch (error) {
+                alert('Erro ao copiar. Selecione e copie manualmente: ' + chave);
+            }
+        }
+
+        // Função removida - QR Code PIX requer integração bancária oficial
+
+
+        function gerarPixCopiaCola(chave, nomeRecebedor, cidade) {
+            function adicionarCampo(id, valor) {
+                const tamanho = valor.length.toString().padStart(2, '0');
+                return id + tamanho + valor;
+            }
+            
+            let payload = '';
+            payload += adicionarCampo('00', '01'); // Payload Format Indicator
+            payload += adicionarCampo('01', '11'); // Point of Initiation Method (11 = static)
+            
+            // Merchant Account Information (26)
+            let merchantInfo = '';
+            merchantInfo += adicionarCampo('00', 'BR.GOV.BCB.PIX'); // GUI
+            merchantInfo += adicionarCampo('01', chave); // Chave PIX
+            payload += adicionarCampo('26', merchantInfo);
+            
+            payload += adicionarCampo('52', '0000'); // Merchant Category Code
+            payload += adicionarCampo('53', '986'); // Transaction Currency (BRL)
+            payload += adicionarCampo('58', 'BR'); // Country Code
+            payload += adicionarCampo('59', nomeRecebedor.toUpperCase().substring(0, 25)); // Merchant Name
+            payload += adicionarCampo('60', cidade.toUpperCase().substring(0, 15)); // Merchant City
+            
+            // Additional Data Field Template (62)
+            let additionalData = '';
+            additionalData += adicionarCampo('05', '***'); // Reference Label
+            payload += adicionarCampo('62', additionalData);
+            
+            // CRC16
+            payload += '6304';
+            const crc = calcularCRC16(payload);
+            payload = payload.substring(0, payload.length - 4) + crc;
+            
+            return payload;
+        }
+        
+        function calcularCRC16(payload) {
+            let crc = 0xFFFF;
+            const polynomial = 0x1021;
+            
+            for (let i = 0; i < payload.length; i++) {
+                crc ^= (payload.charCodeAt(i) << 8);
+                for (let j = 0; j < 8; j++) {
+                    if (crc & 0x8000) {
+                        crc = ((crc << 1) ^ polynomial) & 0xFFFF;
+                    } else {
+                        crc = (crc << 1) & 0xFFFF;
+                    }
+                }
+            }
+            
+            return crc.toString(16).toUpperCase().padStart(4, '0');
+        }
+
+        async function excluirPix(pixId) {
+            if (!confirm('Tem certeza que deseja excluir este PIX?')) return;
+            
+            try {
+                await FirebaseDatabase.excluirPix(pixId);
+                alert('PIX excluído com sucesso!');
+                carregarPix();
+            } catch (error) {
+                console.error('Erro ao excluir PIX:', error);
+                alert('Erro ao excluir PIX.');
+            }
+        }
+
+        function limparFormulario() {
+            document.getElementById('formPix').reset();
+            document.getElementById('dicaChave').style.display = 'none';
+        }
+
+        // Submissão do formulário
+        document.getElementById('formPix').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            console.log('Iniciando cadastro PIX...');
+            
+            const tipo = document.getElementById('tipoPix').value;
+            const chave = document.getElementById('chavePix').value.trim();
+            const titular = document.getElementById('nomeTitular').value.trim();
+            const banco = document.getElementById('banco').value.trim();
+            const descricao = document.getElementById('descricaoPix').value.trim();
+            
+            console.log('Dados do formulário:', { tipo, chave, titular, banco, descricao });
+            
+            // Validações
+            if (!tipo || !chave || !titular) {
+                alert('Preencha todos os campos obrigatórios!');
+                return;
+            }
+            
+            if (!validarChavePix(tipo, chave)) {
+                alert('Chave PIX inválida para o tipo selecionado!');
+                return;
+            }
+            
+            try {
+                // Verificar se Firebase está disponível
+                if (!firebase || !firebase.firestore) {
+                    throw new Error('Firebase não está inicializado');
+                }
+                
+                const pixData = {
+                    tipo: tipo,
+                    chave: chave,
+                    titular: titular,
+                    banco: banco,
+                    descricao: descricao || 'PIX',
+                    dataCadastro: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                console.log('Dados para salvar:', pixData);
+                
+                let pixId;
+                if (typeof FirebaseDatabase !== 'undefined' && FirebaseDatabase.cadastrarPix) {
+                    pixId = await FirebaseDatabase.cadastrarPix(pixData);
+                } else {
+                    // Fallback: usar diretamente o Firestore
+                    const docRef = await db.collection('pix').add(pixData);
+                    pixId = docRef.id;
+                }
+                console.log('PIX cadastrado com ID:', pixId);
+                
+                alert('PIX cadastrado com sucesso!');
+                limparFormulario();
+                carregarPix();
+                
+            } catch (error) {
+                console.error('Erro detalhado ao cadastrar PIX:', error);
+                alert(`Erro ao cadastrar PIX: ${error.message}`);
+            }
+        });
+    </script>
+</body>
+</html>
