@@ -207,6 +207,11 @@
             </select>
             <select id="filtroCategoria" onchange="filtrarPecas()">
                 <option value="">Todas as categorias</option>
+                <option value="top">TOP</option>
+                <option value="legging">Legging</option>
+                <option value="macacao">Macacão</option>
+                <option value="regata">Regata</option>
+                <option value="cropped">Cropped</option>
                 <option value="camiseta">Camiseta</option>
                 <option value="calca">Calça</option>
                 <option value="vestido">Vestido</option>
@@ -267,6 +272,11 @@
                         <div class="form-group">
                             <label for="editCategoria">Categoria:</label>
                             <select id="editCategoria" required>
+                                <option value="top">TOP</option>
+                                <option value="legging">Legging</option>
+                                <option value="macacao">Macacão</option>
+                                <option value="regata">Regata</option>
+                                <option value="cropped">Cropped</option>
                                 <option value="camiseta">Camiseta</option>
                                 <option value="calca">Calça</option>
                                 <option value="vestido">Vestido</option>
@@ -284,23 +294,7 @@
                         </div>
                     </div>
                     
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="editCor">Cor:</label>
-                            <input type="text" id="editCor" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="editTamanho">Tamanho:</label>
-                            <select id="editTamanho" required>
-                                <option value="PP">PP</option>
-                                <option value="P">P</option>
-                                <option value="M">M</option>
-                                <option value="G">G</option>
-                                <option value="GG">GG</option>
-                                <option value="XG">XG</option>
-                            </select>
-                        </div>
-                    </div>
+
                     
                     <div class="form-row">
                         <div class="form-group">
@@ -504,8 +498,7 @@
             document.getElementById('editNome').value = peca.nome;
             document.getElementById('editCategoria').value = peca.categoria;
             document.getElementById('editMarca').value = peca.marca;
-            document.getElementById('editCor').value = peca.cor;
-            document.getElementById('editTamanho').value = peca.tamanho;
+
             document.getElementById('editPrecoFornecedor').value = peca.precoFornecedor || 0;
             document.getElementById('editPreco').value = peca.preco;
             document.getElementById('editEstoque').value = peca.estoque;
@@ -554,8 +547,7 @@
                 nome: document.getElementById('editNome').value,
                 categoria: document.getElementById('editCategoria').value,
                 marca: document.getElementById('editMarca').value,
-                cor: document.getElementById('editCor').value,
-                tamanho: document.getElementById('editTamanho').value,
+
                 precoFornecedor: parseFloat(document.getElementById('editPrecoFornecedor').value),
                 preco: parseFloat(document.getElementById('editPreco').value),
                 estoque: parseInt(document.getElementById('editEstoque').value),
