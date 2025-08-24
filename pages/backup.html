@@ -127,6 +127,17 @@
                 const vendas = await FirebaseDatabase.obterVendas();
                 const pecas = await FirebaseDatabase.obterPecas();
                 const usuarios = await FirebaseDatabase.obterUsuarios();
+                const marcas = await FirebaseDatabase.obterMarcas();
+                const maquinas = await FirebaseDatabase.obterMaquinas();
+                const clientes = await db.collection('clientes').get().then(snapshot => 
+                    snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                );
+                const contasPagar = await db.collection('contas_pagar').get().then(snapshot => 
+                    snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                );
+                const pix = await db.collection('pix').get().then(snapshot => 
+                    snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                );
                 
                 document.getElementById('statusBackup').innerHTML = `
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
@@ -141,6 +152,18 @@
                         <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
                             <h4 style="margin: 0; color: #ff4500;">Usuários</h4>
                             <p style="margin: 0.5rem 0 0 0; font-size: 1.5rem; font-weight: bold;">${usuarios.length}</p>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                            <h4 style="margin: 0; color: #ff4500;">Marcas</h4>
+                            <p style="margin: 0.5rem 0 0 0; font-size: 1.5rem; font-weight: bold;">${marcas.length}</p>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                            <h4 style="margin: 0; color: #ff4500;">Clientes</h4>
+                            <p style="margin: 0.5rem 0 0 0; font-size: 1.5rem; font-weight: bold;">${clientes.length}</p>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                            <h4 style="margin: 0; color: #ff4500;">Contas a Pagar</h4>
+                            <p style="margin: 0.5rem 0 0 0; font-size: 1.5rem; font-weight: bold;">${contasPagar.length}</p>
                         </div>
                     </div>
                     <p style="margin-top: 1rem; color: #28a745; text-align: center;">✅ Sistema funcionando normalmente</p>
@@ -176,24 +199,47 @@
                 atualizarProgresso(50, 'Coletando usuários...');
                 const usuarios = await FirebaseDatabase.obterUsuarios();
                 
-                atualizarProgresso(70, 'Coletando máquinas...');
+                atualizarProgresso(60, 'Coletando máquinas...');
                 const maquinas = await FirebaseDatabase.obterMaquinas();
                 
-                atualizarProgresso(90, 'Gerando arquivo...');
+                atualizarProgresso(70, 'Coletando marcas...');
+                const marcas = await FirebaseDatabase.obterMarcas();
+                
+                atualizarProgresso(80, 'Coletando clientes...');
+                const clientes = await db.collection('clientes').get().then(snapshot => 
+                    snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                );
+                
+                atualizarProgresso(85, 'Coletando contas a pagar...');
+                const contasPagar = await db.collection('contas_pagar').get().then(snapshot => 
+                    snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                );
+                
+                atualizarProgresso(90, 'Coletando PIX...');
+                const pix = await db.collection('pix').get().then(snapshot => 
+                    snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                );
+                
+                atualizarProgresso(95, 'Gerando arquivo...');
                 
                 const backup = {
                     dataBackup: new Date().toISOString(),
-                    versao: '1.0',
+                    versao: '2.0',
                     dados: {
                         vendas: vendas,
                         pecas: pecas,
                         usuarios: usuarios,
-                        maquinas: maquinas
+                        maquinas: maquinas,
+                        marcas: marcas,
+                        clientes: clientes,
+                        contas_pagar: contasPagar,
+                        pix: pix
                     }
                 };
                 
                 // Verificação de integridade
-                const totalRegistros = vendas.length + pecas.length + usuarios.length + maquinas.length;
+                const totalRegistros = vendas.length + pecas.length + usuarios.length + maquinas.length + 
+                                     marcas.length + clientes.length + contasPagar.length + pix.length;
                 backup.metadados = {
                     totalRegistros: totalRegistros,
                     checksum: btoa(JSON.stringify(backup.dados)).length,

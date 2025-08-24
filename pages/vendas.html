@@ -87,6 +87,7 @@
                         <li><a href="relatorio-financeiro.html">Financeiro</a></li>
                         <li><a href="relatorio-vendas.html">Vendas</a></li>
                         <li><a href="relatorio-analitico.html">Analítico</a></li>
+                        <li><a href="relatorio-clientes.html">Clientes</a></li>
                     </ul>
                 </li>
                 <li><a href="vendas.html">Vendas</a></li>
@@ -1277,6 +1278,9 @@
                     telefone: document.getElementById('telefoneCliente').value,
                     cpf: document.getElementById('cpfCliente').value
                 };
+                
+                // Salvar ou atualizar cliente no banco de dados
+                await FirebaseDatabase.salvarOuAtualizarCliente(cliente);
                 
                 // Registrar ou atualizar venda
                 const venda = {
