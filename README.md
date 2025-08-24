@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/21958077/README.md)
 # 🏋️ Move Up Fit - Sistema de Gestão
 
 Sistema completo de gestão empresarial desenvolvido para a Move Up Fit, com controle de vendas, estoque, relatórios financeiros e muito mais.

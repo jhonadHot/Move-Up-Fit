@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contas a Pagar - Sistema de Gestão</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <style>
+        .contas-container {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .cadastro-section {
+            flex: 1;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        
+        .painel-section {
+            flex: 2;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .conta-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: #f9f9f9;
+        }
+        
+        .conta-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .parcela-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            margin: 0.3rem 0;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #ff4500;
+        }
+        
+        .parcela-paga {
+            background: #e8f5e8 !important;
+            border-left-color: #28a745 !important;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+        
+        .checkbox-parcela {
+            margin-right: 1rem;
+        }
+        
+        .parcelas {
+            display: none;
+        }
+        
+        .parcelas.show {
+            display: block;
+        }
+        
+
+        
+        .total-geral {
+            background: #ff4500;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 2rem;
+        }
+        
+        .totais-container {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .total-parcelas {
+            background: #28a745;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: bold;
+            flex: 1;
+        }
+        
+        .conta-paga {
+            background: #e8f5e8 !important;
+            border: 2px solid #28a745 !important;
+            opacity: 0.8;
+        }
+        
+        .conta-paga .conta-header {
+            position: relative;
+        }
+        
+        .conta-paga .conta-header::after {
+            content: '✓ PAGO';
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #28a745;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        
+        .btn-acao-pequeno {
+            padding: 0.2rem 0.4rem;
+            margin: 0.1rem;
+            font-size: 0.7rem;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .btn-editar {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-excluir {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .toggle-parcelas {
+            background: none;
+            border: none;
+            color: #ff4500;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: underline;
+            padding: 0;
+            margin-top: 0.5rem;
+        }
+        
+        .btn-imprimir {
+            background-color: #28a745;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 1rem;
+            width: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            .totais-container {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .total-geral, .total-parcelas {
+                font-size: 1rem;
+                padding: 0.8rem;
+            }
+        }
+        
+        .tabela-impressao {
+            display: none;
+        }
+        
+        @media print {
+            .header, .sidebar, .cadastro-section, .btn-imprimir, .toggle-parcelas, .checkbox-parcela, .conta-item, .totais-container {
+                display: none !important;
+            }
+            
+            .tabela-impressao {
+                display: block !important;
+                width: 100%;
+                margin: 0;
+                padding: 20px;
+            }
+            
+            .tabela-impressao table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 12px;
+                margin-bottom: 20px;
+            }
+            
+            .tabela-impressao th,
+            .tabela-impressao td {
+                border: 1px solid #000;
+                padding: 8px 4px;
+                text-align: left;
+            }
+            
+            .tabela-impressao th {
+                background-color: #f0f0f0;
+                font-weight: bold;
+            }
+            
+            .secao-titulo {
+                font-size: 14px;
+                font-weight: bold;
+                margin: 20px 0 10px 0;
+                padding: 5px;
+                background-color: #f0f0f0;
+                border: 1px solid #000;
+            }
+            
+            .contas-container {
+                display: none !important;
+            }
+            
+            .painel-section {
+                display: none !important;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .contas-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="../assets/images/Move Up.png" alt="Move Up Fit">
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Início</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Cadastro</a>
+                    <ul class="submenu">
+                        <li><a href="cadastro-marca.html">Fornecedor</a></li>
+                        <li><a href="cadastro-maquinas.html">Máquina de Cartão</a></li>
+                        <li><a href="cadastro-pix.html">PIX</a></li>
+                        <li><a href="cadastro-pecas.html">Peças</a></li>
+                    </ul>
+                </li>
+                <li><a href="estoque.html">Estoque</a></li>
+                <li id="menuUsuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                <li>
+                    <a href="#" onclick="toggleSubmenu(event)">Relatórios</a>
+                    <ul class="submenu">
+                        <li><a href="relatorio-financeiro.html">Financeiro</a></li>
+                        <li><a href="relatorio-vendas.html">Vendas</a></li>
+                        <li><a href="relatorio-analitico.html">Analítico</a></li>
+                    </ul>
+                </li>
+                <li><a href="vendas.html">Vendas</a></li>
+                <li><a href="contas-pagar.html">Contas a Pagar</a></li>
+                <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <main class="main-content">
+        <h1 style="text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #ff4500; font-weight: 300; font-size: 2.5rem; margin-bottom: 2rem;">Contas a Pagar</h1>
+        
+        <div class="contas-container">
+            <!-- Seção de Cadastro -->
+            <div class="cadastro-section">
+                <h3 style="color: #ff4500; margin-bottom: 1.5rem;">Nova Conta</h3>
+                
+                <form id="formConta">
+                    <div class="form-group">
+                        <label for="fornecedor">Fornecedor:</label>
+                        <select id="fornecedor" name="fornecedor" required onchange="toggleOutroGasto()">
+                            <option value="">Selecione...</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="grupoOutroGasto" style="display: none;">
+                        <label for="outroGasto">Descrição do Gasto:</label>
+                        <input type="text" id="outroGasto" name="outroGasto" placeholder="Ex: Aluguel, Energia, Internet...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="valorTotal">Valor Total (R$):</label>
+                        <input type="number" id="valorTotal" name="valorTotal" step="0.01" min="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="formaPagamento">Forma de Pagamento:</label>
+                        <select id="formaPagamento" name="formaPagamento" required onchange="toggleParcelas()">
+                            <option value="">Selecione...</option>
+                            <option value="dinheiro">Dinheiro</option>
+                            <option value="cartao">Cartão</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="grupoVezes" style="display: none;">
+                        <label for="quantidadeVezes">Quantidade de Vezes:</label>
+                        <select id="quantidadeVezes" name="quantidadeVezes" onchange="calcularParcela()">
+                            <option value="1">1x</option>
+                            <option value="2">2x</option>
+                            <option value="3">3x</option>
+                            <option value="4">4x</option>
+                            <option value="5">5x</option>
+                            <option value="6">6x</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="grupoValorParcela" style="display: none;">
+                        <label for="valorParcela">Valor da Parcela (R$):</label>
+                        <input type="number" id="valorParcela" name="valorParcela" step="0.01" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="observacao">Observação:</label>
+                        <textarea id="observacao" name="observacao" rows="3" placeholder="Observações sobre a conta..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn">Cadastrar Conta</button>
+                </form>
+            </div>
+            
+            <!-- Seção do Painel -->
+            <div class="painel-section">
+                <h3 style="color: #ff4500; margin-bottom: 1.5rem;">Contas Cadastradas</h3>
+                
+                <!-- Filtros -->
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                        <div>
+                            <label for="filtroQuantidade" style="font-size: 0.9rem; margin-right: 0.5rem;">Quantidade:</label>
+                            <select id="filtroQuantidade" onchange="aplicarFiltros()" style="padding: 0.3rem;">
+                                <option value="todos">Todos os lançamentos</option>
+                                <option value="10">Últimos 10</option>
+                                <option value="20">Últimos 20</option>
+                                <option value="50">Últimos 50</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="filtroStatus" style="font-size: 0.9rem; margin-right: 0.5rem;">Status:</label>
+                            <select id="filtroStatus" onchange="aplicarFiltros()" style="padding: 0.3rem;">
+                                <option value="pendentes">Apenas Pendentes</option>
+                                <option value="pagas">Apenas Pagas</option>
+                                <option value="todas">Todas</option>
+                            </select>
+                        </div>
+                        <button onclick="limparFiltros()" style="padding: 0.3rem 0.8rem; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Limpar</button>
+                    </div>
+                </div>
+                
+                <div id="listaContas">
+                    <p style="text-align: center; color: #666;">Nenhuma conta cadastrada</p>
+                </div>
+                
+                <div class="totais-container" style="display: none;" id="totaisContainer">
+                    <div id="totalGeral" class="total-geral">
+                        Total: R$ 0,00
+                    </div>
+                    <div id="totalParcelas" class="total-parcelas">
+                        Parcelas Pendentes: 0
+                    </div>
+                </div>
+                
+                <button class="btn-imprimir" onclick="imprimirContas()" style="display: none;" id="btnImprimir">
+                    Imprimir Relatório
+                </button>
+            </div>
+        </div>
+        
+        <!-- Tabela para impressão -->
+        <div class="tabela-impressao" id="tabelaImpressao">
+            <h2 style="text-align: center; margin-bottom: 20px;">Relatório de Contas a Pagar</h2>
+            <div id="conteudoImpressao"></div>
+        </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script>
+        // Verificar autenticação
+        firebase.auth().onAuthStateChanged(async function(user) {
+            if (!user) {
+                window.location.href = '../login.html';
+            } else {
+                const nivel = await FirebaseDatabase.obterNivelUsuario(user.uid);
+                if (nivel === 'master') {
+                    document.getElementById('menuUsuarios').style.display = 'block';
+                }
+                carregarFornecedores();
+                carregarContas();
+            }
+        });
+
+        // Função de logout
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '../login.html';
+            });
+        }
+
+        // Carregar fornecedores (marcas)
+        async function carregarFornecedores() {
+            try {
+                const snapshot = await db.collection('marcas').orderBy('nomeMarca').get();
+                const marcas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const select = document.getElementById('fornecedor');
+                
+                marcas.forEach(marca => {
+                    const option = document.createElement('option');
+                    option.value = marca.nomeMarca;
+                    option.text = marca.nomeMarca;
+                    select.add(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar fornecedores:', error);
+            }
+        }
+
+        // Toggle campo outro gasto
+        function toggleOutroGasto() {
+            const fornecedor = document.getElementById('fornecedor').value;
+            const grupoOutroGasto = document.getElementById('grupoOutroGasto');
+            const outroGasto = document.getElementById('outroGasto');
+            
+            if (fornecedor === 'outros') {
+                grupoOutroGasto.style.display = 'block';
+                outroGasto.required = true;
+            } else {
+                grupoOutroGasto.style.display = 'none';
+                outroGasto.required = false;
+                outroGasto.value = '';
+            }
+        }
+
+        // Toggle parcelas baseado na forma de pagamento
+        function toggleParcelas() {
+            const formaPagamento = document.getElementById('formaPagamento').value;
+            const grupoVezes = document.getElementById('grupoVezes');
+            const grupoValorParcela = document.getElementById('grupoValorParcela');
+            
+            if (formaPagamento === 'cartao') {
+                grupoVezes.style.display = 'block';
+                grupoValorParcela.style.display = 'block';
+                calcularParcela();
+            } else {
+                grupoVezes.style.display = 'none';
+                grupoValorParcela.style.display = 'none';
+                document.getElementById('quantidadeVezes').value = '1';
+            }
+        }
+
+        // Calcular valor da parcela
+        function calcularParcela() {
+            const valorTotal = parseFloat(document.getElementById('valorTotal').value) || 0;
+            const quantidadeVezes = parseInt(document.getElementById('quantidadeVezes').value) || 1;
+            const valorParcela = valorTotal / quantidadeVezes;
+            
+            document.getElementById('valorParcela').value = valorParcela.toFixed(2);
+        }
+
+        // Recalcular quando valor total mudar
+        document.getElementById('valorTotal').addEventListener('input', calcularParcela);
+
+        // Submissão do formulário
+        document.getElementById('formConta').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const valorTotal = parseFloat(formData.get('valorTotal'));
+            const quantidadeVezes = formData.get('formaPagamento') === 'cartao' ? 
+                parseInt(formData.get('quantidadeVezes')) : 1;
+            const valorParcela = valorTotal / quantidadeVezes;
+            
+            // Criar parcelas
+            const parcelas = [];
+            for (let i = 1; i <= quantidadeVezes; i++) {
+                parcelas.push({
+                    numero: i,
+                    valor: valorParcela,
+                    paga: false,
+                    dataPagamento: null
+                });
+            }
+            
+            const fornecedorSelecionado = formData.get('fornecedor');
+            const fornecedorFinal = fornecedorSelecionado === 'outros' ? 
+                formData.get('outroGasto') : fornecedorSelecionado;
+            
+            const conta = {
+                fornecedor: fornecedorFinal,
+                tipoFornecedor: fornecedorSelecionado === 'outros' ? 'outros' : 'marca',
+                valorTotal: valorTotal,
+                formaPagamento: formData.get('formaPagamento'),
+                quantidadeVezes: quantidadeVezes,
+                valorParcela: valorParcela,
+                observacao: formData.get('observacao'),
+                parcelas: parcelas,
+                dataCadastro: new Date().toISOString()
+            };
+            
+            try {
+                const editId = this.dataset.editId;
+                
+                if (editId) {
+                    // Atualizar conta existente
+                    await db.collection('contas_pagar').doc(editId).update({
+                        ...conta,
+                        dataAtualizacao: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    alert('Conta atualizada com sucesso!');
+                    delete this.dataset.editId;
+                    document.querySelector('#formConta button[type="submit"]').textContent = 'Cadastrar Conta';
+                } else {
+                    // Criar nova conta
+                    const docRef = await db.collection('contas_pagar').add({
+                        ...conta,
+                        dataCadastro: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    alert('Conta cadastrada com sucesso!');
+                }
+                
+                this.reset();
+                toggleParcelas();
+                toggleOutroGasto();
+                carregarContas();
+            } catch (error) {
+                console.error('Erro ao processar conta:', error);
+                alert('Erro ao processar conta.');
+            }
+        });
+
+        let todasAsContas = [];
+        
+        // Carregar contas
+        async function carregarContas() {
+            try {
+                const snapshot = await db.collection('contas_pagar').orderBy('dataCadastro', 'desc').get();
+                todasAsContas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                aplicarFiltros();
+            } catch (error) {
+                console.error('Erro ao carregar contas:', error);
+            }
+        }
+        
+        // Aplicar filtros
+        function aplicarFiltros() {
+            const filtroQuantidade = document.getElementById('filtroQuantidade').value;
+            const filtroStatus = document.getElementById('filtroStatus').value;
+            
+            let contasFiltradas = [...todasAsContas];
+            
+            // Filtro por quantidade
+            if (filtroQuantidade !== 'todos') {
+                const quantidade = parseInt(filtroQuantidade);
+                contasFiltradas = contasFiltradas.slice(0, quantidade);
+            }
+            
+            // Filtro por status (padrão: apenas pendentes)
+            if (filtroStatus === 'pagas') {
+                contasFiltradas = contasFiltradas.filter(conta => conta.parcelas.every(p => p.paga));
+            } else if (filtroStatus === 'pendentes') {
+                contasFiltradas = contasFiltradas.filter(conta => !conta.parcelas.every(p => p.paga));
+            }
+            // 'todas' não filtra nada
+            
+            exibirContas(contasFiltradas);
+        }
+        
+        // Limpar filtros
+        function limparFiltros() {
+            document.getElementById('filtroQuantidade').value = 'todos';
+            document.getElementById('filtroStatus').value = 'pendentes';
+            aplicarFiltros();
+        }
+
+        // Exibir contas
+        function exibirContas(contas) {
+            const lista = document.getElementById('listaContas');
+            const totalGeralDiv = document.getElementById('totalGeral');
+            const totalParcelasDiv = document.getElementById('totalParcelas');
+            const totaisContainer = document.getElementById('totaisContainer');
+            const btnImprimir = document.getElementById('btnImprimir');
+            
+            if (contas.length === 0) {
+                lista.innerHTML = '<p style="text-align: center; color: #666;">Nenhuma conta cadastrada</p>';
+                totaisContainer.style.display = 'none';
+                btnImprimir.style.display = 'none';
+                return;
+            }
+            
+            // Calcular totais
+            let totalGeral = 0;
+            let totalParcelasPendentes = 0;
+            let totalPrimeirasParcelas = 0;
+            
+            contas.forEach(conta => {
+                const parcelasPendentes = conta.parcelas.filter(p => !p.paga);
+                const valorPendente = parcelasPendentes.reduce((sum, p) => sum + p.valor, 0);
+                totalGeral += valorPendente;
+                totalParcelasPendentes += parcelasPendentes.length;
+                
+                // Somar primeira parcela em aberto
+                const primeiraParcela = conta.parcelas.find(p => !p.paga);
+                if (primeiraParcela) {
+                    totalPrimeirasParcelas += primeiraParcela.valor;
+                }
+            });
+            
+            totalGeralDiv.innerHTML = `Total: R$ ${totalGeral.toFixed(2)}`;
+            totalParcelasDiv.innerHTML = `Parcelas Pendentes: ${totalParcelasPendentes}<br><small>1ªs Parcelas: R$ ${totalPrimeirasParcelas.toFixed(2)}</small>`;
+            totaisContainer.style.display = 'flex';
+            btnImprimir.style.display = 'block';
+            
+            lista.innerHTML = contas.map((conta, index) => {
+                const todasPagas = conta.parcelas.every(p => p.paga);
+                return `
+                <div class="conta-item ${todasPagas ? 'conta-paga' : ''}">
+                    <div class="conta-header">
+                        <div>
+                            <strong>${conta.fornecedor}</strong>
+                            ${conta.tipoFornecedor === 'outros' ? '<span style="color: #666; font-size: 0.8rem;"> (Outros)</span>' : ''}
+                            <br>
+                            <small>Total: R$ ${conta.valorTotal.toFixed(2)} | ${conta.formaPagamento === 'cartao' ? conta.quantidadeVezes + 'x' : 'À vista'}</small>
+                        </div>
+                        <div style="text-align: right;">
+                            ${conta.observacao ? `<small style="font-style: italic; color: #666;">${conta.observacao}</small>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                        <button class="toggle-parcelas" onclick="toggleParcelasVisibilidade(${index})">
+                            Ver Parcelas ▼
+                        </button>
+                        <div>
+                            <button class="btn-acao-pequeno btn-editar" onclick="editarConta('${conta.id}')">Editar</button>
+                            <button class="btn-acao-pequeno btn-excluir" onclick="excluirConta('${conta.id}')">Excluir</button>
+                        </div>
+                    </div>
+                    <div class="parcelas" id="parcelas-${index}">
+                        ${conta.parcelas.map(parcela => `
+                            <div class="parcela-item ${parcela.paga ? 'parcela-paga' : ''}">
+                                <div>
+                                    <input type="checkbox" class="checkbox-parcela" 
+                                           ${parcela.paga ? 'checked' : ''} 
+                                           onchange="toggleParcela('${conta.id}', ${parcela.numero})">
+                                    Parcela ${parcela.numero}/${conta.quantidadeVezes}
+                                </div>
+                                <div>
+                                    R$ ${parcela.valor.toFixed(2)}
+                                    ${parcela.paga ? `<br><small>Pago em: ${new Date(parcela.dataPagamento).toLocaleDateString('pt-BR')}</small>` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        // Toggle visibilidade das parcelas
+        function toggleParcelasVisibilidade(index) {
+            const parcelas = document.getElementById(`parcelas-${index}`);
+            const botao = document.querySelectorAll('.toggle-parcelas')[index];
+            
+            if (parcelas.classList.contains('show')) {
+                parcelas.classList.remove('show');
+                botao.innerHTML = 'Ver Parcelas ▼';
+            } else {
+                parcelas.classList.add('show');
+                botao.innerHTML = 'Ocultar Parcelas ▲';
+            }
+        }
+
+        // Toggle parcela paga
+        async function toggleParcela(contaId, numeroParcela) {
+            try {
+                const contaRef = db.collection('contas_pagar').doc(contaId);
+                const doc = await contaRef.get();
+                
+                if (doc.exists) {
+                    const conta = doc.data();
+                    const parcelas = conta.parcelas.map(parcela => {
+                        if (parcela.numero === numeroParcela) {
+                            return {
+                                ...parcela,
+                                paga: !parcela.paga,
+                                dataPagamento: !parcela.paga ? new Date().toISOString() : null
+                            };
+                        }
+                        return parcela;
+                    });
+                    
+                    await contaRef.update({ parcelas });
+                    aplicarFiltros(); // Recarrega com filtros aplicados
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar parcela:', error);
+                alert('Erro ao atualizar parcela.');
+            }
+        }
+        
+        // Função para imprimir
+        function imprimirContas() {
+            const agora = new Date();
+            const dataHora = agora.toLocaleString('pt-BR');
+            
+            // Usar contas filtradas que estão sendo exibidas na tela
+            const filtroQuantidade = document.getElementById('filtroQuantidade').value;
+            const filtroStatus = document.getElementById('filtroStatus').value;
+            
+            let contasFiltradas = [...todasAsContas];
+            
+            // Aplicar os mesmos filtros da tela
+            if (filtroQuantidade !== 'todos') {
+                const quantidade = parseInt(filtroQuantidade);
+                contasFiltradas = contasFiltradas.slice(0, quantidade);
+            }
+            
+            if (filtroStatus === 'pagas') {
+                contasFiltradas = contasFiltradas.filter(conta => conta.parcelas.every(p => p.paga));
+            } else if (filtroStatus === 'pendentes') {
+                contasFiltradas = contasFiltradas.filter(conta => !conta.parcelas.every(p => p.paga));
+            }
+            
+            // Separar contas pagas e pendentes das contas filtradas
+            const contasPagas = contasFiltradas.filter(conta => conta.parcelas.every(p => p.paga));
+            const contasPendentes = contasFiltradas.filter(conta => !conta.parcelas.every(p => p.paga));
+            
+            let html = `<p style="text-align: right; font-size: 12px; margin-bottom: 20px;">Gerado em: ${dataHora}</p>`;
+            
+            // Adicionar informações dos filtros aplicados
+            html += `<p style="font-size: 12px; margin-bottom: 15px; color: #666;">Filtros aplicados: ${filtroQuantidade === 'todos' ? 'Todos os lançamentos' : 'Últimos ' + filtroQuantidade} | Status: ${filtroStatus === 'pendentes' ? 'Apenas Pendentes' : filtroStatus === 'pagas' ? 'Apenas Pagas' : 'Todas'}</p>`;
+            
+            // Seção de contas pagas
+            if (contasPagas.length > 0) {
+                html += `<div class="secao-titulo">CONTAS PAGAS</div>`;
+                html += gerarTabelaImpressao(contasPagas, true);
+            }
+            
+            // Seção de contas pendentes
+            if (contasPendentes.length > 0) {
+                html += `<div class="secao-titulo">CONTAS PENDENTES</div>`;
+                html += gerarTabelaImpressao(contasPendentes, false);
+            }
+            
+            if (contasFiltradas.length === 0) {
+                html += `<p style="text-align: center; color: #666; margin: 20px 0;">Nenhuma conta encontrada com os filtros aplicados</p>`;
+            }
+            
+            document.getElementById('conteudoImpressao').innerHTML = html;
+            window.print();
+        }
+        
+        // Gerar tabela para impressão
+        function gerarTabelaImpressao(contas, soPagas) {
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fornecedor</th>
+                            <th>Valor Total</th>
+                            <th>Qtd Vezes</th>
+                            <th>Valor Parcela</th>
+                            <th>Qtd Faltante</th>
+                            <th>Observação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            contas.forEach(conta => {
+                const parcelasPendentes = conta.parcelas.filter(p => !p.paga).length;
+                const fornecedor = conta.tipoFornecedor === 'outros' ? 
+                    `${conta.fornecedor} (Outros)` : conta.fornecedor;
+                
+                html += `
+                    <tr>
+                        <td>${fornecedor}</td>
+                        <td>R$ ${conta.valorTotal.toFixed(2)}</td>
+                        <td>${conta.quantidadeVezes}x</td>
+                        <td>R$ ${conta.valorParcela.toFixed(2)}</td>
+                        <td>${parcelasPendentes}</td>
+                        <td>${conta.observacao || '-'}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            return html;
+        }
+        
+        // Editar conta
+        function editarConta(contaId) {
+            const conta = todasAsContas.find(c => c.id === contaId);
+            if (!conta) return;
+            
+            // Preencher formulário com dados da conta
+            document.getElementById('fornecedor').value = conta.tipoFornecedor === 'outros' ? 'outros' : conta.fornecedor;
+            if (conta.tipoFornecedor === 'outros') {
+                toggleOutroGasto();
+                document.getElementById('outroGasto').value = conta.fornecedor;
+            }
+            document.getElementById('valorTotal').value = conta.valorTotal;
+            document.getElementById('formaPagamento').value = conta.formaPagamento;
+            document.getElementById('quantidadeVezes').value = conta.quantidadeVezes;
+            document.getElementById('observacao').value = conta.observacao || '';
+            
+            toggleParcelas();
+            calcularParcela();
+            
+            // Armazenar ID para edição
+            document.getElementById('formConta').dataset.editId = contaId;
+            
+            // Alterar texto do botão
+            document.querySelector('#formConta button[type="submit"]').textContent = 'Atualizar Conta';
+            
+            alert('Dados carregados para edição. Modifique e clique em "Atualizar Conta".');
+        }
+        
+        // Excluir conta
+        async function excluirConta(contaId) {
+            if (!confirm('Tem certeza que deseja excluir esta conta? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+            
+            try {
+                await db.collection('contas_pagar').doc(contaId).delete();
+                alert('Conta excluída com sucesso!');
+                carregarContas();
+            } catch (error) {
+                console.error('Erro ao excluir conta:', error);
+                alert('Erro ao excluir conta.');
+            }
+        }
+    </script>
+</body>
+</html>

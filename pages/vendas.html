@@ -90,6 +90,7 @@
                     </ul>
                 </li>
                 <li><a href="vendas.html">Vendas</a></li>
+                <li><a href="contas-pagar.html">Contas a Pagar</a></li>
                 <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
             </ul>
         </nav>
@@ -146,8 +147,8 @@
                     <small id="telefoneError" style="color: red; display: none;">Telefone inválido</small>
                 </div>
                 <div class="form-group">
-                    <label for="cpfCliente">CPF: <span style="color: red;">*</span></label>
-                    <input type="text" id="cpfCliente" placeholder="000.000.000-00" required>
+                    <label for="cpfCliente">CPF:</label>
+                    <input type="text" id="cpfCliente" placeholder="000.000.000-00">
                     <small id="cpfError" style="color: red; display: none;">CPF inválido</small>
                 </div>
             </div>
@@ -1259,37 +1260,13 @@
                     dadosPagamento.parcelas = document.getElementById('parcelasCrediario').value;
                 }
                 
-                // Atualizar estoque apenas se não for edição
-                if (!vendaEditandoId) {
-                    // Nova venda - diminuir estoque
-                    for (const item of carrinho) {
-                        const novoEstoque = item.estoque - item.quantidade;
+                // Atualizar estoque - sempre diminuir do estoque atual
+                // (O estoque já foi restaurado no carregarVendaParaEdicao se for edição)
+                for (const item of carrinho) {
+                    const produto = produtosDisponiveis.find(p => p.id === item.id);
+                    if (produto) {
+                        const novoEstoque = produto.estoque - item.quantidade;
                         await FirebaseDatabase.atualizarEstoque(item.id, novoEstoque);
-                    }
-                } else {
-                    // Edição - ajustar estoque baseado na diferença
-                    for (const item of carrinho) {
-                        const itemOriginal = vendaOriginal.itens.find(i => i.produtoId === item.id);
-                        const quantidadeOriginal = itemOriginal ? itemOriginal.quantidade : 0;
-                        const diferenca = item.quantidade - quantidadeOriginal;
-                        
-                        if (diferenca !== 0) {
-                            const novoEstoque = item.estoque - diferenca;
-                            await FirebaseDatabase.atualizarEstoque(item.id, novoEstoque);
-                        }
-                    }
-                    
-                    // Restaurar estoque de itens removidos
-                    for (const itemOriginal of vendaOriginal.itens) {
-                        const itemAtual = carrinho.find(i => i.id === itemOriginal.produtoId);
-                        if (!itemAtual) {
-                            // Item foi removido, restaurar estoque
-                            const produto = produtosDisponiveis.find(p => p.id === itemOriginal.produtoId);
-                            if (produto) {
-                                const novoEstoque = produto.estoque + itemOriginal.quantidade;
-                                await FirebaseDatabase.atualizarEstoque(itemOriginal.produtoId, novoEstoque);
-                            }
-                        }
                     }
                 }
 
@@ -1413,6 +1390,20 @@
                 vendaEditandoId = vendaId;
                 vendaOriginal = venda;
 
+                // PRIMEIRO: Restaurar estoque dos itens da venda original
+                for (const item of venda.itens) {
+                    const produto = produtosDisponiveis.find(p => p.id === item.produtoId);
+                    if (produto) {
+                        const novoEstoque = produto.estoque + item.quantidade;
+                        await FirebaseDatabase.atualizarEstoque(item.produtoId, novoEstoque);
+                        // Atualizar também no array local
+                        produto.estoque = novoEstoque;
+                    }
+                }
+
+                // Recarregar produtos para ter estoques atualizados
+                await carregarProdutos();
+
                 // Carregar dados do cliente
                 if (venda.cliente) {
                     document.getElementById('nomeCliente').value = venda.cliente.nome || '';
@@ -1424,7 +1415,7 @@
                 // Carregar itens no carrinho
                 carrinho = [];
                 for (const item of venda.itens) {
-                    // Encontrar produto nos disponíveis
+                    // Encontrar produto nos disponíveis (com estoque já restaurado)
                     const produto = produtosDisponiveis.find(p => p.id === item.produtoId);
                     if (produto) {
                         carrinho.push({
@@ -1569,10 +1560,10 @@
                 telefoneError.style.display = 'none';
             }
             
-            // Validar CPF
+            // Validar CPF (apenas se preenchido)
             const cpf = document.getElementById('cpfCliente').value;
             const cpfError = document.getElementById('cpfError');
-            if (!validarCPF(cpf)) {
+            if (cpf && !validarCPF(cpf)) {
                 cpfError.style.display = 'block';
                 valido = false;
             } else {

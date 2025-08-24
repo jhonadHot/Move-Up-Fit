@@ -485,4 +485,53 @@ class FirebaseDatabase {
             throw error;
         }
     }
+
+    static async salvarContaPagar(conta) {
+        try {
+            const docRef = await db.collection('contas_pagar').add({
+                ...conta,
+                dataCadastro: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return docRef.id;
+        } catch (error) {
+            console.error("Erro ao salvar conta a pagar:", error);
+            throw error;
+        }
+    }
+
+    static async obterContasPagar() {
+        try {
+            const snapshot = await db.collection('contas_pagar').orderBy('dataCadastro', 'desc').get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error("Erro ao obter contas a pagar:", error);
+            return [];
+        }
+    }
+
+    static async toggleParcelaPaga(contaId, numeroParcela) {
+        try {
+            const contaRef = db.collection('contas_pagar').doc(contaId);
+            const doc = await contaRef.get();
+            
+            if (doc.exists) {
+                const conta = doc.data();
+                const parcelas = conta.parcelas.map(parcela => {
+                    if (parcela.numero === numeroParcela) {
+                        return {
+                            ...parcela,
+                            paga: !parcela.paga,
+                            dataPagamento: !parcela.paga ? new Date().toISOString() : null
+                        };
+                    }
+                    return parcela;
+                });
+                
+                await contaRef.update({ parcelas });
+            }
+        } catch (error) {
+            console.error("Erro ao atualizar parcela:", error);
+            throw error;
+        }
+    }
 }
