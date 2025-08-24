@@ -207,18 +207,18 @@
             </select>
             <select id="filtroCategoria" onchange="filtrarPecas()">
                 <option value="">Todas as categorias</option>
-                <option value="top">TOP</option>
+                <option value="blusa">Blusa</option>
+                <option value="calca">Calça</option>
+                <option value="camiseta">Camiseta</option>
+                <option value="cropped">Cropped</option>
+                <option value="jaqueta">Jaqueta</option>
                 <option value="legging">Legging</option>
                 <option value="macacao">Macacão</option>
                 <option value="regata">Regata</option>
-                <option value="cropped">Cropped</option>
-                <option value="camiseta">Camiseta</option>
-                <option value="calca">Calça</option>
-                <option value="vestido">Vestido</option>
                 <option value="saia">Saia</option>
-                <option value="blusa">Blusa</option>
-                <option value="jaqueta">Jaqueta</option>
                 <option value="shorts">Shorts</option>
+                <option value="top">TOP</option>
+                <option value="vestido">Vestido</option>
             </select>
             <button class="btn" onclick="carregarPecas()">Atualizar</button>
             <button class="btn btn-secondary" onclick="imprimirRelatorio()" style="background-color: #28a745;">Imprimir</button>
@@ -272,18 +272,18 @@
                         <div class="form-group">
                             <label for="editCategoria">Categoria:</label>
                             <select id="editCategoria" required>
-                                <option value="top">TOP</option>
+                                <option value="blusa">Blusa</option>
+                                <option value="calca">Calça</option>
+                                <option value="camiseta">Camiseta</option>
+                                <option value="cropped">Cropped</option>
+                                <option value="jaqueta">Jaqueta</option>
                                 <option value="legging">Legging</option>
                                 <option value="macacao">Macacão</option>
                                 <option value="regata">Regata</option>
-                                <option value="cropped">Cropped</option>
-                                <option value="camiseta">Camiseta</option>
-                                <option value="calca">Calça</option>
-                                <option value="vestido">Vestido</option>
                                 <option value="saia">Saia</option>
-                                <option value="blusa">Blusa</option>
-                                <option value="jaqueta">Jaqueta</option>
                                 <option value="shorts">Shorts</option>
+                                <option value="top">TOP</option>
+                                <option value="vestido">Vestido</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -391,6 +391,9 @@
                 avisoDiv.style.display = 'none';
                 return;
             }
+
+            // Ordenar peças por nome em ordem alfabética
+            pecas.sort((a, b) => a.nome.localeCompare(b.nome));
 
             // Verificar peças com estoque zerado
             const pecasZeradas = pecas.filter(peca => peca.estoque === 0);
