@@ -817,7 +817,7 @@
             document.getElementById('bandeiraCartao').value = '';
             
             // Mostrar/esconder desconto baseado na forma de pagamento
-            if (formaPagamento === 'avista') {
+            if (formaPagamento === 'avista' || formaPagamento === 'crediario') {
                 descontoGroup.style.display = 'block';
             } else {
                 descontoGroup.style.display = 'none';
