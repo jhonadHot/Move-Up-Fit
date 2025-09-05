@@ -902,27 +902,71 @@
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhuma venda encontrada</td></tr>';
                 return;
             }
-            
-            tbody.innerHTML = vendas.map(venda => {
-                let dataVenda = 'N/A';
-                if (venda.dataVenda) {
-                    if (venda.dataVenda.toDate) {
-                        dataVenda = venda.dataVenda.toDate().toLocaleDateString('pt-BR');
-                    } else {
-                        dataVenda = new Date(venda.dataVenda).toLocaleDateString('pt-BR');
-                    }
+
+            // Ordenar por status (pendente primeiro) e depois por nome
+            vendas.sort((a, b) => {
+                // Calcular status de A
+                let statusA = 'PAGO';
+                if (a.pagamento && a.pagamento.formaPagamento === 'crediario') {
+                    const pagamentosA = pagamentosParcelas.filter(p => p.vendaId === a.id);
+                    const totalPagoA = pagamentosA.reduce((sum, p) => sum + p.valor, 0);
+                    const saldoA = (a.saldoRestante || a.total) - totalPagoA;
+                    statusA = saldoA <= 0.01 ? 'PAGO' : 'PENDENTE';
                 }
                 
-                const formaPagamento = getFormaPagamentoTexto(venda.pagamento?.formaPagamento);
-                const status = venda.pagamento?.formaPagamento === 'crediario' ? 'Pendente' : 'Pago';
+                // Calcular status de B
+                let statusB = 'PAGO';
+                if (b.pagamento && b.pagamento.formaPagamento === 'crediario') {
+                    const pagamentosB = pagamentosParcelas.filter(p => p.vendaId === b.id);
+                    const totalPagoB = pagamentosB.reduce((sum, p) => sum + p.valor, 0);
+                    const saldoB = (b.saldoRestante || b.total) - totalPagoB;
+                    statusB = saldoB <= 0.01 ? 'PAGO' : 'PENDENTE';
+                }
                 
+                // Primeiro por status (PENDENTE primeiro)
+                if (statusA !== statusB) {
+                    return statusA === 'PENDENTE' ? -1 : 1;
+                }
+                
+                // Depois por nome
+                const nomeA = (a.cliente && a.cliente.nome) ? a.cliente.nome.toLowerCase() : '';
+                const nomeB = (b.cliente && b.cliente.nome) ? b.cliente.nome.toLowerCase() : '';
+                return nomeA.localeCompare(nomeB);
+            });
+            
+            tbody.innerHTML = vendas.map(venda => {
+                let dataVenda, dataFormatada;
+                
+                try {
+                    if (venda.dataVenda && venda.dataVenda.toDate) {
+                        dataVenda = venda.dataVenda.toDate();
+                    } else if (venda.dataVenda) {
+                        dataVenda = new Date(venda.dataVenda);
+                    } else {
+                        dataVenda = new Date();
+                    }
+                    dataFormatada = dataVenda.toLocaleDateString('pt-BR');
+                } catch (error) {
+                    dataFormatada = 'Data inválida';
+                }
+
+                // Verificar status do crediário
+                let status = 'PAGO';
+                if (venda.pagamento && venda.pagamento.formaPagamento === 'crediario') {
+                    const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                    const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+                    const saldoRestante = (venda.saldoRestante || venda.total) - totalPago;
+                    
+                    status = saldoRestante <= 0.01 ? 'PAGO' : 'PENDENTE';
+                }
+
                 return `
                     <tr>
-                        <td>${dataVenda}</td>
-                        <td>${venda.cliente?.nome || 'N/A'}</td>
-                        <td>${formaPagamento}</td>
+                        <td>${dataFormatada}</td>
+                        <td>${venda.cliente ? venda.cliente.nome : 'Não informado'}</td>
+                        <td>${venda.pagamento ? getFormaPagamentoTexto(venda.pagamento.formaPagamento) : 'Não informado'}</td>
                         <td>R$ ${(venda.total || 0).toFixed(2)}</td>
-                        <td><span class="${status === 'Pendente' ? 'valor-negativo' : 'valor-positivo'}">${status}</span></td>
+                        <td><span style="color: ${status === 'PAGO' ? '#28a745' : '#dc3545'}">${status}</span></td>
                     </tr>
                 `;
             }).join('');
@@ -930,8 +974,21 @@
 
         function mostrarCrediarioPendente(vendas) {
             const container = document.getElementById('listaCrediario');
-            const crediarios = vendas.filter(venda => venda.pagamento?.formaPagamento === 'crediario');
-            
+            const crediarios = vendas.filter(venda => {
+                if (venda.pagamento?.formaPagamento !== 'crediario') return false;
+                
+                // Verificar se ainda tem valor pendente
+                const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+                const saldoRestante = (venda.saldoRestante || venda.total) - totalPago;
+                
+                return saldoRestante > 0.01; // Só mostra se ainda deve
+            }).sort((a, b) => {
+                const nomeA = (a.cliente && a.cliente.nome) ? a.cliente.nome.toLowerCase() : '';
+                const nomeB = (b.cliente && b.cliente.nome) ? b.cliente.nome.toLowerCase() : '';
+                return nomeA.localeCompare(nomeB);
+            });
+
             if (crediarios.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #666;">Nenhum crediário pendente</p>';
                 return;
@@ -1346,6 +1403,17 @@ Move Up Fit`;
                 graficoVendas.destroy();
                 graficoVendas = null;
             }
+        }
+
+        function getStatusVenda(venda) {
+            if (venda.pagamento && venda.pagamento.formaPagamento === 'crediario') {
+                const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+                const saldoRestante = (venda.saldoRestante || venda.total) - totalPago;
+                
+                return saldoRestante <= 0.01 ? 'PAGO' : 'PENDENTE';
+            }
+            return 'PAGO';
         }
     </script>
 </body>

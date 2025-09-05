@@ -389,6 +389,68 @@
                 carregarUsuarios();
                 carregarMaquinas();
                 await carregarPixPrincipal();
+
+                document.getElementById('nomeCliente').addEventListener('input', async function() {
+                const nome = this.value;
+                if (nome.length < 2) {
+                    document.getElementById('sugestoesClientes').style.display = 'none';
+                    return;
+                }
+                
+                try {
+                    const vendas = await FirebaseDatabase.obterVendas();
+                    const clientesMap = new Map();
+                    
+                    vendas.forEach(venda => {
+                        if (venda.cliente && venda.cliente.nome && venda.cliente.nome.toLowerCase().includes(nome.toLowerCase())) {
+                            const cpf = venda.cliente.cpf || 'sem-cpf-' + Math.random();
+                            clientesMap.set(cpf, venda.cliente);
+                        }
+                    });
+                    
+                    const clientes = Array.from(clientesMap.values()).slice(0, 5);
+                    
+                    if (clientes.length > 0) {
+                        const container = document.getElementById('sugestoesClientes');
+                        container.innerHTML = clientes.map(cliente => `
+                            <div style="padding: 0.5rem; cursor: pointer; border-bottom: 1px solid #eee; background: white;" 
+                                onclick="preencherCliente('${cliente.nome}', '${cliente.cpf || ''}', '${cliente.telefone || ''}', '${cliente.email || ''}')">
+                                <strong>${cliente.nome}</strong>
+                                ${cliente.cpf ? `<br><small>CPF: ${cliente.cpf}</small>` : ''}
+                            </div>
+                        `).join('');
+                        container.style.display = 'block';
+                    } else {
+                        document.getElementById('sugestoesClientes').style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar clientes:', error);
+                }
+            });
+
+            document.getElementById('cpfCliente').addEventListener('input', async function() {
+                aplicarMascaraCPF(this);
+                const cpfLimpo = this.value.replace(/\D/g, '');
+                if (cpfLimpo.length === 11) {
+                    try {
+                        const vendas = await FirebaseDatabase.obterVendas();
+                        const venda = vendas.find(v => v.cliente && v.cliente.cpf === cpfLimpo);
+                        if (venda && venda.cliente) {
+                            document.getElementById('nomeCliente').value = venda.cliente.nome || '';
+                            document.getElementById('telefoneCliente').value = venda.cliente.telefone || '';
+                            document.getElementById('emailCliente').value = venda.cliente.email || '';
+                        }
+                    } catch (error) {
+                        console.error('Erro ao buscar cliente por CPF:', error);
+                    }
+                }
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#nomeCliente') && !e.target.closest('#sugestoesClientes')) {
+                    document.getElementById('sugestoesClientes').style.display = 'none';
+                }
+            });
                 
                 // Verificar se é edição de venda
                 const urlParams = new URLSearchParams(window.location.search);
@@ -707,8 +769,8 @@
             
             // Calcular máximo de parcelas baseado no valor (mínimo R$ 100 por parcela)
             let maxParcelas = 1;
-            if (saldoRestante >= 200) maxParcelas = 2;
-            if (saldoRestante >= 300) maxParcelas = 3;
+            if (saldoRestante >= 110) maxParcelas = 2;
+            if (saldoRestante >= 250) maxParcelas = 3;
             if (saldoRestante >= 400) maxParcelas = 4;
             
             // Adicionar opções de parcelamento
@@ -1721,6 +1783,15 @@
                 sugestoes.style.display = 'none';
             }
         });
+
+        function preencherCliente(nome, cpf, telefone, email) {
+            document.getElementById('nomeCliente').value = nome;
+            document.getElementById('cpfCliente').value = cpf;
+            document.getElementById('telefoneCliente').value = telefone;
+            document.getElementById('emailCliente').value = email;
+            document.getElementById('sugestoesClientes').style.display = 'none';
+        }
+
     </script>
 </body>
 </html>
