@@ -629,10 +629,23 @@
                     }
                 }
 
-                // Excluir venda
+                // Remover todos os pagamentos de parcelas relacionados à venda
+                try {
+                    const pagamentosParcelas = await FirebaseDatabase.obterPagamentosParcelas();
+                    const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === vendaCancelarId);
+                    
+                    for (const pagamento of pagamentosVenda) {
+                        await db.collection('pagamentos_parcelas').doc(pagamento.id).delete();
+                        console.log(`Pagamento removido: R$ ${pagamento.valor}`);
+                    }
+                } catch (error) {
+                    console.error('Erro ao remover pagamentos:', error);
+                }
+
+                // Excluir venda completamente
                 await FirebaseDatabase.excluirVenda(vendaCancelarId);
                 
-                alert('Venda cancelada com sucesso! Estoque restaurado.');
+                alert('Venda cancelada com sucesso!\n- Estoque restaurado\n- Pagamentos removidos\n- Venda excluída');
                 
                 // Fechar modal e recarregar vendas
                 fecharModalMotivo();
