@@ -96,6 +96,11 @@
             margin: 0 auto 2rem auto;
             width: 90%;
             max-width: 1200px;
+            border-left: 4px solid #ff4500;
+        }
+        .crediario-pendente h3 {
+            color: #ff4500;
+            margin-top: 0;
         }
         .pendencia-item {
             border: 1px solid #ddd;
@@ -292,7 +297,7 @@
         </div>
 
         <div class="crediario-pendente">
-            <h3>Crediário - Controle de Parcelas</h3>
+            <h3>Crediário - Controle de Parcelas <small style="font-size: 0.7em; color: #666; font-weight: normal;">(Todos os pendentes)</small></h3>
             <div id="listaCrediario">
                 <p style="text-align: center; color: #666;">Nenhum crediário pendente</p>
             </div>
@@ -393,6 +398,9 @@
                 <div class="form-group" id="valorDiferente" style="display: none;">
                     <label for="valorPagamento">Valor a pagar (R$):</label>
                     <input type="number" id="valorPagamento" step="0.01" min="0.01" placeholder="0,00">
+                    <small style="color: #666; display: block; margin-top: 0.3rem;">
+                        💡 O valor será aplicado primeiro nas parcelas vencidas (mais antigas)
+                    </small>
                 </div>
                 <div class="form-group">
                     <label for="formaPagamentoParcela">Forma de Pagamento:</label>
@@ -509,8 +517,8 @@
                 // Mostrar detalhes
                 mostrarDetalhes(vendasFiltradas);
                 
-                // Mostrar crediário pendente
-                mostrarCrediarioPendente(vendasFiltradas);
+                // Mostrar crediário pendente (sempre todos, independente do filtro)
+                await mostrarCrediarioPendente(vendasFiltradas);
                 
             } catch (error) {
                 console.error('Erro ao gerar relatório:', error);
@@ -1116,9 +1124,11 @@
             }).join('');
         }
 
-        function mostrarCrediarioPendente(vendas) {
+        async function mostrarCrediarioPendente(vendas) {
             const container = document.getElementById('listaCrediario');
-            const crediarios = vendas.filter(venda => {
+            
+            // Buscar TODAS as vendas de crediário, ignorando filtro de data
+            const todasVendasCrediario = todasVendas.filter(venda => {
                 if (venda.pagamento?.formaPagamento !== 'crediario') return false;
                 
                 // Verificar se ainda tem valor pendente
@@ -1132,11 +1142,27 @@
                 const nomeB = (b.cliente && b.cliente.nome) ? b.cliente.nome.toLowerCase() : '';
                 return nomeA.localeCompare(nomeB);
             });
+            
+            const crediarios = todasVendasCrediario;
 
+            // Atualizar título com contador
+            const tituloCrediario = document.querySelector('.crediario-pendente h3');
             if (crediarios.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #666;">Nenhum crediário pendente</p>';
+                container.innerHTML = '<p style="text-align: center; color: #28a745; font-weight: bold;">✅ Nenhum crediário pendente - Tudo pago!</p>';
+                tituloCrediario.innerHTML = 'Crediário - Controle de Parcelas <small style="font-size: 0.7em; color: #28a745; font-weight: normal;">(0 pendentes)</small>';
                 return;
             }
+            
+            // Calcular total pendente
+            let totalGeralPendente = 0;
+            crediarios.forEach(venda => {
+                const saldoRestante = venda.saldoRestante || venda.total || 0;
+                const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+                totalGeralPendente += (saldoRestante - totalPago);
+            });
+            
+            tituloCrediario.innerHTML = `Crediário - Controle de Parcelas <small style="font-size: 0.7em; color: #dc3545; font-weight: normal;">(${crediarios.length} cliente${crediarios.length > 1 ? 's' : ''} - Total: R$ ${totalGeralPendente.toFixed(2)})</small>`;
             
             container.innerHTML = crediarios.map((venda, index) => {
                 const saldoRestante = venda.saldoRestante || venda.total || 0;
@@ -1192,12 +1218,12 @@
                             p.vendaId === venda.id && p.numeroParcela === (i + 1)
                         );
                         const valorPagoParcela = pagamentosParcela.reduce((sum, p) => sum + p.valor, 0);
-                        const paga = valorPagoParcela >= valorParcela;
-                        const valorRestanteParcela = valorParcela - valorPagoParcela;
+                        const paga = valorPagoParcela >= (valorParcela - 0.01); // Tolerância de 1 centavo
+                        const valorRestanteParcela = Math.max(0, valorParcela - valorPagoParcela);
                         
                         const statusClass = paga ? 'parcela-paga' : 'parcela-pendente';
-                        const statusTexto = paga ? 'Paga' : (valorPagoParcela > 0 ? `Parcial: R$ ${valorRestanteParcela.toFixed(2)}` : 'Pendente');
-                        const botaoTexto = paga ? 'Paga' : 'Marcar como Paga';
+                        const statusTexto = paga ? 'Paga' : (valorPagoParcela > 0 ? `Parcial: Falta R$ ${valorRestanteParcela.toFixed(2)}` : 'Pendente');
+                        const botaoTexto = valorPagoParcela > 0 && !paga ? 'Completar Pagamento' : 'Marcar como Paga';
                         const botaoWhatsApp = !paga && venda.cliente?.telefone ? 
                             `<button class="btn-whatsapp" onclick="enviarWhatsApp('${venda.cliente.telefone}', '${venda.cliente.nome}', ${valorRestanteParcela.toFixed(2)}, '${dataFormatada}')" title="Enviar lembrete por WhatsApp">
                                 📱 WhatsApp
@@ -1208,11 +1234,13 @@
                                 <div>
                                     <strong>Parcela ${i + 1}/${parcelas}</strong><br>
                                     <small>Vencimento: ${dataFormatada}</small>
+                                    ${valorPagoParcela > 0 && !paga ? `<br><small style="color: #28a745;">Pago: R$ ${valorPagoParcela.toFixed(2)}</small>` : ''}
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                                     <span>R$ ${valorParcela.toFixed(2)}</span>
                                     <span style="font-size: 0.8rem; color: ${paga ? '#28a745' : '#856404'};">${statusTexto}</span>
-                                    ${!paga ? `<button class="btn-parcela" onclick="abrirModalPagamento('${venda.id}', ${i + 1}, '${venda.cliente?.nome}', ${valorParcela.toFixed(2)}, '${dataFormatada}')">${botaoTexto}</button>` : ''}
+                                    ${!paga ? `<button class="btn-parcela" onclick="abrirModalPagamento('${venda.id}', ${i + 1}, '${venda.cliente?.nome}', ${valorRestanteParcela.toFixed(2)}, '${dataFormatada}')">${botaoTexto}</button>` : ''}
+                                    ${paga ? `<button class="btn-parcela" onclick="reverterParcela('${venda.id}', ${i + 1}, '${venda.cliente?.nome}', ${valorPagoParcela.toFixed(2)})" style="background-color: #dc3545;">Reverter</button>` : ''}
                                     ${botaoWhatsApp}
                                 </div>
                             </div>
@@ -1371,7 +1399,15 @@
         function abrirModalPagamento(vendaId, numeroParcela, nomeCliente, valorParcela, dataVencimento) {
             parcelaAtual = { vendaId, numeroParcela, valorParcela };
             document.getElementById('clientePagamento').textContent = nomeCliente;
-            document.getElementById('parcelaPagamento').textContent = `${numeroParcela}ª parcela - R$ ${valorParcela} (Venc: ${dataVencimento})`;
+            
+            // Verificar se está vencida
+            const hoje = new Date();
+            const partesData = dataVencimento.split('/');
+            const dataVenc = new Date(partesData[2], partesData[1] - 1, partesData[0]);
+            const vencida = dataVenc < hoje;
+            const avisoVencida = vencida ? ' <span style="color: #dc3545; font-weight: bold;">⚠️ VENCIDA</span>' : '';
+            
+            document.getElementById('parcelaPagamento').innerHTML = `${numeroParcela}ª parcela - R$ ${valorParcela} (Venc: ${dataVencimento})${avisoVencida}`;
             document.getElementById('formaPagamentoParcela').value = '';
             document.getElementById('opcoesMaquina').style.display = 'none';
             document.querySelector('input[name="tipoPagamento"][value="parcela"]').checked = true;
@@ -1438,20 +1474,74 @@
                 let valorRestante = valorPagar;
                 const novosPagamentos = [];
                 
-                for (let i = 1; i <= parcelas && valorRestante > 0; i++) {
-                    const jaPaga = pagamentosExistentes.some(p => p.numeroParcela === i);
-                    if (!jaPaga) {
-                        const valorParaParcela = Math.min(valorRestante, valorParcela);
-                        novosPagamentos.push({
-                            vendaId: parcelaAtual.vendaId,
-                            numeroParcela: i,
-                            valor: valorParaParcela,
-                            formaPagamento: formaPagamento,
-                            maquina: maquina,
-                            valorOriginalParcela: valorParcela
-                        });
-                        valorRestante -= valorParaParcela;
+                // Criar lista de parcelas com seus status
+                const dataPromessa = venda.dataPromessa;
+                const hoje = new Date();
+                const parcelasComStatus = [];
+                
+                if (dataPromessa) {
+                    const dataBase = new Date(dataPromessa + 'T00:00:00');
+                    
+                    for (let i = 1; i <= parcelas; i++) {
+                        const dataParcela = new Date(dataBase);
+                        dataParcela.setMonth(dataParcela.getMonth() + (i - 1));
+                        
+                        const pagamentosParcela = pagamentosExistentes.filter(p => p.numeroParcela === i);
+                        const valorJaPago = pagamentosParcela.reduce((sum, p) => sum + p.valor, 0);
+                        const valorRestanteParcela = valorParcela - valorJaPago;
+                        
+                        if (valorRestanteParcela > 0.01) {
+                            parcelasComStatus.push({
+                                numero: i,
+                                dataVencimento: dataParcela,
+                                valorRestante: valorRestanteParcela,
+                                vencida: dataParcela < hoje
+                            });
+                        }
                     }
+                    
+                    // Ordenar: vencidas primeiro (da mais antiga para mais recente), depois as futuras
+                    parcelasComStatus.sort((a, b) => {
+                        if (a.vencida && !b.vencida) return -1;
+                        if (!a.vencida && b.vencida) return 1;
+                        return a.dataVencimento - b.dataVencimento;
+                    });
+                } else {
+                    // Se não tem data de promessa, processar em ordem
+                    for (let i = 1; i <= parcelas; i++) {
+                        const pagamentosParcela = pagamentosExistentes.filter(p => p.numeroParcela === i);
+                        const valorJaPago = pagamentosParcela.reduce((sum, p) => sum + p.valor, 0);
+                        const valorRestanteParcela = valorParcela - valorJaPago;
+                        
+                        if (valorRestanteParcela > 0.01) {
+                            parcelasComStatus.push({
+                                numero: i,
+                                valorRestante: valorRestanteParcela,
+                                vencida: false
+                            });
+                        }
+                    }
+                }
+                
+                // Distribuir pagamento pelas parcelas (priorizando vencidas)
+                for (const parcela of parcelasComStatus) {
+                    if (valorRestante <= 0.01) break;
+                    
+                    const valorParaParcela = Math.min(valorRestante, parcela.valorRestante);
+                    novosPagamentos.push({
+                        vendaId: parcelaAtual.vendaId,
+                        numeroParcela: parcela.numero,
+                        valor: valorParaParcela,
+                        formaPagamento: formaPagamento,
+                        maquina: maquina,
+                        valorOriginalParcela: valorParcela
+                    });
+                    valorRestante -= valorParaParcela;
+                }
+                
+                if (novosPagamentos.length === 0) {
+                    alert('Não há parcelas pendentes para pagar!');
+                    return;
                 }
                 
                 // Salvar todos os pagamentos
@@ -1459,7 +1549,15 @@
                     await FirebaseDatabase.registrarPagamentoParcela(pagamento);
                 }
                 
-                alert(`Pagamento de R$ ${valorPagar.toFixed(2)} registrado com sucesso!\n${novosPagamentos.length} parcela(s) afetada(s).`);
+                // Criar mensagem detalhada
+                let mensagem = `Pagamento de R$ ${valorPagar.toFixed(2)} registrado com sucesso!\n\n`;
+                mensagem += `Parcelas afetadas:\n`;
+                novosPagamentos.forEach(p => {
+                    const status = p.valor >= (p.valorOriginalParcela - 0.01) ? 'PAGA' : 'PARCIAL';
+                    mensagem += `- Parcela ${p.numeroParcela}: R$ ${p.valor.toFixed(2)} [${status}]\n`;
+                });
+                
+                alert(mensagem);
                 fecharModalPagamento();
                 gerarRelatorio(); // Recarregar relatório
             } catch (error) {
@@ -1567,7 +1665,9 @@ Move Up Fit`;
             document.getElementById('quantidadeEstoque').textContent = '0';
             
             document.getElementById('tabelaDetalhes').innerHTML = '<tr><td colspan="5" style="text-align: center;">Selecione um período</td></tr>';
-            document.getElementById('listaCrediario').innerHTML = '<p style="text-align: center; color: #666;">Selecione um período</p>';
+            
+            // Crediário sempre mostra todos os pendentes
+            mostrarCrediarioPendente([]);
             
             // Destruir gráficos
             if (graficoFormas) {
@@ -2036,6 +2136,50 @@ Move Up Fit`;
                 alert('Erro ao registrar baixa.');
             }
         }
+        async function reverterParcela(vendaId, numeroParcela, nomeCliente, valorParcela) {
+            if (!confirm(`Tem certeza que deseja reverter a parcela ${numeroParcela} de ${nomeCliente}?\n\nValor: R$ ${valorParcela}\n\nEsta ação irá:\n- Remover o pagamento da parcela\n- Devolver o dinheiro ao caixa (será retirado do total)`)) {
+                return;
+            }
+            
+            try {
+                // Buscar pagamentos desta parcela
+                const pagamentosParcela = pagamentosParcelas.filter(p => 
+                    p.vendaId === vendaId && p.numeroParcela === numeroParcela
+                );
+                
+                if (pagamentosParcela.length === 0) {
+                    alert('Nenhum pagamento encontrado para esta parcela!');
+                    return;
+                }
+                
+                // Remover todos os pagamentos desta parcela
+                for (const pagamento of pagamentosParcela) {
+                    await db.collection('pagamentos_parcelas').doc(pagamento.id).delete();
+                }
+                
+                // Registrar no histórico
+                await FirebaseDatabase.registrarHistorico(
+                    'REVERSAO_PARCELA',
+                    {
+                        vendaId: vendaId,
+                        cliente: nomeCliente,
+                        numeroParcela: numeroParcela,
+                        valor: valorParcela
+                    },
+                    firebase.auth().currentUser?.email || 'Usuário não identificado'
+                );
+                
+                alert(`Parcela ${numeroParcela} revertida com sucesso!\nValor de R$ ${valorParcela} foi removido do caixa.`);
+                
+                // Recarregar relatório
+                gerarRelatorio();
+                
+            } catch (error) {
+                console.error('Erro ao reverter parcela:', error);
+                alert('Erro ao reverter parcela.');
+            }
+        }
+        
         // Event listener para fechar modais ao clicar fora
         document.addEventListener('click', function(event) {
             const modalPagamento = document.getElementById('modalPagamento');
