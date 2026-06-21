@@ -16,8 +16,9 @@
         </div>
     </header>
 
-    <div class="sidebar" id="sidebar">
-        <button class="menu-toggle" id="menuToggle">☰</button>
+    <button class="menu-toggle" id="menuToggle">&#9654;</button>
+
+ <div class="sidebar" id="sidebar">
         <nav class="nav-menu">
             <ul>
                 <li><a href="../index.html">Início</a></li>
@@ -30,7 +31,9 @@
                     </ul>
                 </li>
                 <li><a href="estoque.html">Estoque</a></li>
-                <li><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                <li id="menuUsuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                <li id="menuBackup" style="display: none;"><a href="backup.html">Backup</a></li>
+                <li id="menuHistorico" style="display: none;"><a href="historico.html">Histórico de Ações</a></li>
                 <li>
                     <a href="#" onclick="toggleSubmenu(event)">Relatórios</a>
                     <ul class="submenu">
@@ -43,6 +46,9 @@
             </ul>
         </nav>
     </div>
+
+    
+    <button onclick="history.back()" style="position:fixed;top:calc(var(--header-height) + 12px);right:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#888;padding:0.4rem 0.9rem;border-radius:8px;cursor:pointer;font-size:0.82rem;font-family:Inter,sans-serif;z-index:1001;transition:all 0.2s;" class="btn-voltar" onmouseover="this.style.color='#f0f0f0'" onmouseout="this.style.color='#888'">&#8592; Voltar</button>
 
     <main class="main-content">
         <div class="form-container" style="margin: 0 auto;">
@@ -102,6 +108,11 @@
                 if (nivel !== 'master') {
                     alert('Acesso negado. Apenas usuários MASTER podem acessar esta página.');
                     window.location.href = '../index.html';
+                } else {
+                    ['menuUsuarios','menuHistorico','menuBackup'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.style.display = 'block';
+                    });
                 }
             }
         });

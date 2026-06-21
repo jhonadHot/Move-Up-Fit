@@ -10,10 +10,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
     <style>
         .relatorio-container {
-            background: white;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 2rem;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin-top: 2rem;
         }
         .filtros {
@@ -25,10 +25,12 @@
             flex-wrap: wrap;
         }
         .venda-item {
-            border: 1px solid #ddd;
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1rem;
             margin: 1rem 0;
-            border-radius: 4px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.02);
+            color: #f0f0f0;
         }
         .venda-header {
             display: flex;
@@ -36,52 +38,31 @@
             align-items: center;
             margin-bottom: 1rem;
             padding-bottom: 0.5rem;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
-        .venda-info {
-            font-size: 0.9rem;
-            color: #666;
-        }
-        .venda-total {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #ff4500;
-        }
-        .itens-venda {
-            margin: 1rem 0;
-        }
-        .item-produto {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.3rem 0;
-            font-size: 0.9rem;
-        }
+        .venda-info { font-size: 0.9rem; color: #888; }
+        .venda-total { font-size: 1.1rem; font-weight: bold; color: #ff4500; }
+        .itens-venda { margin: 1rem 0; }
+        .item-produto { display: flex; justify-content: space-between; padding: 0.3rem 0; font-size: 0.9rem; }
         .pagamento-info {
-            background: #f8f9fa;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
             padding: 0.8rem;
             border-radius: 4px;
             margin-top: 1rem;
+            color: #f0f0f0;
         }
         .resumo-geral {
-            background: #e8f5e8;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1.5rem;
             border-radius: 8px;
             margin-bottom: 2rem;
             text-align: center;
         }
-        .resumo-item {
-            display: inline-block;
-            margin: 0 2rem;
-        }
-        .resumo-valor {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #28a745;
-        }
-        .resumo-label {
-            font-size: 0.9rem;
-            color: #666;
-        }
+        .resumo-item { display: inline-block; margin: 0 2rem; }
+        .resumo-valor { font-size: 1.5rem; font-weight: bold; color: #ff4500; }
+        .resumo-label { font-size: 0.9rem; color: #888; }
         
         @media print {
             .sidebar, .filtros {
@@ -200,8 +181,11 @@
         </div>
     </header>
 
-    <div class="sidebar" id="sidebar">
-        <button class="menu-toggle" id="menuToggle">☰</button>
+    <button class="menu-toggle" id="menuToggle">&#9654;</button>
+
+    <button onclick="history.back()" style="position:fixed;top:calc(var(--header-height) + 12px);right:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#888;padding:0.4rem 0.9rem;border-radius:8px;cursor:pointer;font-size:0.82rem;font-family:Inter,sans-serif;z-index:1001;transition:all 0.2s;" class="btn-voltar" onmouseover="this.style.color='#f0f0f0'" onmouseout="this.style.color='#888'">&#8592; Voltar</button>
+
+ <div class="sidebar" id="sidebar">
         <nav class="nav-menu">
             <ul>
                 <li><a href="../index.html">Início</a></li>
@@ -276,17 +260,17 @@
         </div>
     </main>
 
-    <!-- Modal para motivo de exclusão -->
-    <div id="modalMotivo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 8px; width: 400px;">
-            <h3>Motivo do Cancelamento</h3>
+    <!-- Modal para motivo de cancelamento/estorno -->
+    <div id="modalMotivo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0f0f18; border: 1px solid rgba(255,255,255,0.1); padding: 2rem; border-radius: 12px; width: 420px; color: #f0f0f0;">
+            <h3 id="modalMotivoTitulo" style="color:#ff4500; margin-bottom:1rem;">Motivo</h3>
             <div class="form-group">
                 <label for="motivoCancelamento">Descreva o motivo:</label>
-                <textarea id="motivoCancelamento" rows="4" style="width: 100%; resize: vertical;" placeholder="Ex: Cliente desistiu, produto com defeito, etc."></textarea>
+                <textarea id="motivoCancelamento" rows="4" style="width: 100%; resize: vertical;" placeholder="Ex: Cliente devolveu as peças, não gostou..."></textarea>
             </div>
             <div style="text-align: right; margin-top: 1rem;">
                 <button class="btn btn-secondary" onclick="fecharModalMotivo()">Cancelar</button>
-                <button class="btn" onclick="confirmarCancelamento()" style="background: #dc3545; margin-left: 0.5rem;">Confirmar Cancelamento</button>
+                <button class="btn" id="btnConfirmarAcao" style="background: #dc3545; margin-left: 0.5rem;">Confirmar</button>
             </div>
         </div>
     </div>
@@ -441,6 +425,7 @@
                                 <div class="venda-total">R$ ${(venda.total || 0).toFixed(2)}</div>
                                 <div>
                                     <button class="btn btn-secondary" onclick="editarVenda('${venda.id}')" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Editar</button>
+                                    <button class="btn" onclick="estornarVenda('${venda.id}')" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background: #ff8c00; margin-left: 0.3rem;">Estorno</button>
                                     <button class="btn" onclick="cancelarVenda('${venda.id}')" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background: #dc3545; margin-left: 0.3rem;">Cancelar</button>
                                 </div>
                             </div>
@@ -568,9 +553,26 @@
         }
 
         let vendaCancelarId = null;
+        let tipoAcaoModal = 'cancelar';
+
+        function estornarVenda(vendaId) {
+            vendaCancelarId = vendaId;
+            tipoAcaoModal = 'estorno';
+            document.getElementById('modalMotivoTitulo').textContent = '↩ Estorno de Venda';
+            document.getElementById('btnConfirmarAcao').textContent = 'Confirmar Estorno';
+            document.getElementById('btnConfirmarAcao').onclick = confirmarCancelamento;
+            document.getElementById('motivoCancelamento').placeholder = 'Ex: Cliente devolveu as peças, não gostou do produto...';
+            document.getElementById('modalMotivo').style.display = 'block';
+            document.getElementById('motivoCancelamento').value = '';
+        }
 
         function cancelarVenda(vendaId) {
             vendaCancelarId = vendaId;
+            tipoAcaoModal = 'cancelar';
+            document.getElementById('modalMotivoTitulo').textContent = 'Motivo do Cancelamento';
+            document.getElementById('btnConfirmarAcao').textContent = 'Confirmar Cancelamento';
+            document.getElementById('btnConfirmarAcao').onclick = confirmarCancelamento;
+            document.getElementById('motivoCancelamento').placeholder = 'Ex: Cliente desistiu, produto com defeito...';
             document.getElementById('modalMotivo').style.display = 'block';
             document.getElementById('motivoCancelamento').value = '';
         }
@@ -583,64 +585,62 @@
         async function confirmarCancelamento() {
             const motivo = document.getElementById('motivoCancelamento').value.trim();
             if (!motivo) {
-                alert('Por favor, descreva o motivo do cancelamento.');
+                alert('Por favor, descreva o motivo.');
                 return;
             }
 
             try {
-                // Obter dados da venda
                 const venda = await FirebaseDatabase.obterVendaPorId(vendaCancelarId);
-                if (!venda) {
-                    alert('Venda não encontrada!');
-                    return;
-                }
+                if (!venda) { alert('Venda não encontrada!'); return; }
 
-                // Obter usuário atual
                 const user = firebase.auth().currentUser;
                 const usuarioEmail = user ? user.email : 'Usuário desconhecido';
+                const acaoHistorico = tipoAcaoModal === 'estorno' ? 'ESTORNO_VENDA' : 'CANCELAMENTO_VENDA';
 
-                // Registrar no histórico
                 await FirebaseDatabase.registrarHistorico(
-                    'CANCELAMENTO_VENDA',
+                    acaoHistorico,
                     {
                         vendaId: vendaCancelarId,
                         cliente: venda.cliente.nome,
                         total: venda.total,
                         motivo: motivo,
+                        tipo: tipoAcaoModal,
                         itens: venda.itens.map(item => `${item.quantidade}x ${item.nome}`)
                     },
                     usuarioEmail
                 );
 
-                // Restaurar estoque de cada item
+                // Restaurar estoque
                 for (const item of venda.itens) {
                     try {
-                        // Obter estoque atual
                         const pecas = await FirebaseDatabase.obterPecas();
                         const peca = pecas.find(p => p.id === item.produtoId);
-                        
                         if (peca) {
-                            const novoEstoque = peca.estoque + item.quantidade;
-                            await FirebaseDatabase.atualizarEstoque(item.produtoId, novoEstoque);
-                            console.log(`Estoque restaurado: ${item.nome} +${item.quantidade}`);
+                            await FirebaseDatabase.atualizarEstoque(item.produtoId, peca.estoque + item.quantidade);
                         }
-                    } catch (error) {
-                        console.error('Erro ao restaurar estoque do item:', item.nome, error);
-                    }
+                    } catch (e) { console.error('Erro estoque:', e); }
+                }
+
+                // Remover pagamentos de parcelas
+                const pagamentosParcelas = await FirebaseDatabase.obterPagamentosParcelas();
+                for (const p of pagamentosParcelas.filter(p => p.vendaId === vendaCancelarId)) {
+                    await db.collection('pagamentos_parcelas').doc(p.id).delete();
                 }
 
                 // Excluir venda
                 await FirebaseDatabase.excluirVenda(vendaCancelarId);
-                
-                alert('Venda cancelada com sucesso! Estoque restaurado.');
-                
-                // Fechar modal e recarregar vendas
+
+                const msg = tipoAcaoModal === 'estorno'
+                    ? 'Estorno realizado com sucesso!\n\n✅ Peças devolvidas ao estoque\n✅ Pagamentos removidos\n✅ Venda cancelada'
+                    : 'Venda cancelada com sucesso!\n\n✅ Estoque restaurado\n✅ Pagamentos removidos\n✅ Venda excluída';
+
+                alert(msg);
                 fecharModalMotivo();
                 carregarVendas();
-                
+
             } catch (error) {
-                console.error('Erro ao cancelar venda:', error);
-                alert('Erro ao cancelar venda. Verifique o console.');
+                console.error('Erro:', error);
+                alert('Erro ao processar. Verifique o console.');
             }
         }
 

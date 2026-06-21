@@ -14,39 +14,43 @@
             max-width: 1200px;
             margin: 1rem auto;
             border-collapse: collapse;
-            background: white;
+            background: rgba(255,255,255,0.04);
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08);
         }
         .estoque-table th,
         .estoque-table td {
             padding: 0.75rem;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            color: #f0f0f0;
         }
         .estoque-table th {
-            background-color: #f8f9fa;
+            background: rgba(255,69,0,0.08);
             font-weight: bold;
             color: #ff4500;
-            font-size: 1rem;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .estoque-table tr:hover {
-            background-color: #f5f5f5;
+        .estoque-table tr:hover td {
+            background: rgba(255,255,255,0.05);
         }
         .estoque-zerado {
-            background-color: #ffebee !important;
-            color: #c62828;
+            background-color: rgba(198,40,40,0.15) !important;
+            color: #ff6b6b;
         }
-        .estoque-zerado:hover {
-            background-color: #ffcdd2 !important;
+        .estoque-zerado:hover td {
+            background-color: rgba(198,40,40,0.2) !important;
         }
         .aviso-estoque {
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
+            background: rgba(255,193,7,0.1);
+            border: 1px solid rgba(255,193,7,0.3);
+            color: #ffc107;
             padding: 1rem;
-            border-radius: 4px;
+            border-radius: 8px;
             margin: 0 auto 1rem auto;
             width: 90%;
             max-width: 1200px;
@@ -77,33 +81,36 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0,0,0,0.7);
         }
         .modal-content {
-            background-color: white;
+            background: rgba(15,15,20,0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
             margin: 5% auto;
             padding: 2rem;
-            border-radius: 8px;
+            border-radius: 16px;
             width: 90%;
             max-width: 600px;
             max-height: 80vh;
             overflow-y: auto;
+            color: #f0f0f0;
         }
         .close {
-            color: #aaa;
+            color: #888;
             float: right;
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
         }
         .close:hover {
-            color: black;
+            color: #ff4500;
         }
         .filtros {
-            background: white;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
             margin: 0 auto 1rem auto;
             width: 90%;
             max-width: 1200px;
@@ -167,8 +174,11 @@
         </div>
     </header>
 
-    <div class="sidebar" id="sidebar">
-        <button class="menu-toggle" id="menuToggle">☰</button>
+    <button class="menu-toggle" id="menuToggle">&#9654;</button>
+
+    <button onclick="history.back()" style="position:fixed;top:calc(var(--header-height) + 12px);right:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#888;padding:0.4rem 0.9rem;border-radius:8px;cursor:pointer;font-size:0.82rem;font-family:Inter,sans-serif;z-index:1001;transition:all 0.2s;" class="btn-voltar" onmouseover="this.style.color='#f0f0f0'" onmouseout="this.style.color='#888'">&#8592; Voltar</button>
+
+     <div class="sidebar" id="sidebar">
         <nav class="nav-menu">
             <ul>
                 <li><a href="../index.html">Início</a></li>
@@ -189,9 +199,11 @@
                         <li><a href="relatorio-financeiro.html">Financeiro</a></li>
                         <li><a href="relatorio-vendas.html">Vendas</a></li>
                         <li><a href="relatorio-analitico.html">Analítico</a></li>
+                        <li><a href="relatorio-clientes.html">Clientes</a></li>
                     </ul>
                 </li>
                 <li><a href="vendas.html">Vendas</a></li>
+                <li><a href="contas-pagar.html">Contas a Pagar</a></li>
                 <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
             </ul>
         </nav>
@@ -207,13 +219,18 @@
             </select>
             <select id="filtroCategoria" onchange="filtrarPecas()">
                 <option value="">Todas as categorias</option>
-                <option value="camiseta">Camiseta</option>
-                <option value="calca">Calça</option>
-                <option value="vestido">Vestido</option>
-                <option value="saia">Saia</option>
                 <option value="blusa">Blusa</option>
+                <option value="calca">Calça</option>
+                <option value="camiseta">Camiseta</option>
+                <option value="cropped">Cropped</option>
                 <option value="jaqueta">Jaqueta</option>
+                <option value="legging">Legging</option>
+                <option value="macacao">Macacão</option>
+                <option value="regata">Regata</option>
+                <option value="saia">Saia</option>
                 <option value="shorts">Shorts</option>
+                <option value="top">TOP</option>
+                <option value="vestido">Vestido</option>
             </select>
             <button class="btn" onclick="carregarPecas()">Atualizar</button>
             <button class="btn btn-secondary" onclick="imprimirRelatorio()" style="background-color: #28a745;">Imprimir</button>
@@ -267,13 +284,18 @@
                         <div class="form-group">
                             <label for="editCategoria">Categoria:</label>
                             <select id="editCategoria" required>
-                                <option value="camiseta">Camiseta</option>
-                                <option value="calca">Calça</option>
-                                <option value="vestido">Vestido</option>
-                                <option value="saia">Saia</option>
                                 <option value="blusa">Blusa</option>
+                                <option value="calca">Calça</option>
+                                <option value="camiseta">Camiseta</option>
+                                <option value="cropped">Cropped</option>
                                 <option value="jaqueta">Jaqueta</option>
+                                <option value="legging">Legging</option>
+                                <option value="macacao">Macacão</option>
+                                <option value="regata">Regata</option>
+                                <option value="saia">Saia</option>
                                 <option value="shorts">Shorts</option>
+                                <option value="top">TOP</option>
+                                <option value="vestido">Vestido</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -284,23 +306,7 @@
                         </div>
                     </div>
                     
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="editCor">Cor:</label>
-                            <input type="text" id="editCor" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="editTamanho">Tamanho:</label>
-                            <select id="editTamanho" required>
-                                <option value="PP">PP</option>
-                                <option value="P">P</option>
-                                <option value="M">M</option>
-                                <option value="G">G</option>
-                                <option value="GG">GG</option>
-                                <option value="XG">XG</option>
-                            </select>
-                        </div>
-                    </div>
+
                     
                     <div class="form-row">
                         <div class="form-group">
@@ -397,6 +403,9 @@
                 avisoDiv.style.display = 'none';
                 return;
             }
+
+            // Ordenar peças por nome em ordem alfabética
+            pecas.sort((a, b) => a.nome.localeCompare(b.nome));
 
             // Verificar peças com estoque zerado
             const pecasZeradas = pecas.filter(peca => peca.estoque === 0);
@@ -504,8 +513,7 @@
             document.getElementById('editNome').value = peca.nome;
             document.getElementById('editCategoria').value = peca.categoria;
             document.getElementById('editMarca').value = peca.marca;
-            document.getElementById('editCor').value = peca.cor;
-            document.getElementById('editTamanho').value = peca.tamanho;
+
             document.getElementById('editPrecoFornecedor').value = peca.precoFornecedor || 0;
             document.getElementById('editPreco').value = peca.preco;
             document.getElementById('editEstoque').value = peca.estoque;
@@ -554,8 +562,7 @@
                 nome: document.getElementById('editNome').value,
                 categoria: document.getElementById('editCategoria').value,
                 marca: document.getElementById('editMarca').value,
-                cor: document.getElementById('editCor').value,
-                tamanho: document.getElementById('editTamanho').value,
+
                 precoFornecedor: parseFloat(document.getElementById('editPrecoFornecedor').value),
                 preco: parseFloat(document.getElementById('editPreco').value),
                 estoque: parseInt(document.getElementById('editEstoque').value),

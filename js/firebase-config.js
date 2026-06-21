@@ -117,6 +117,11 @@ class FirebaseDatabase {
 
     static async obterNivelUsuario(uid) {
         try {
+            // Verificar se é o email master pelo uid
+            const user = firebase.auth().currentUser;
+            if (user && user.email === 'jhonatann.andrade@gmail.com') {
+                return 'master';
+            }
             const doc = await db.collection('usuarios').doc(uid).get();
             return doc.exists ? doc.data().nivel : 'usuario';
         } catch (error) {
@@ -482,6 +487,126 @@ class FirebaseDatabase {
             await db.collection('pix').doc(id).delete();
         } catch (error) {
             console.error("Erro ao excluir PIX:", error);
+            throw error;
+        }
+    }
+
+    static async salvarContaPagar(conta) {
+        try {
+            const docRef = await db.collection('contas_pagar').add({
+                ...conta,
+                dataCadastro: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return docRef.id;
+        } catch (error) {
+            console.error("Erro ao salvar conta a pagar:", error);
+            throw error;
+        }
+    }
+
+    static async obterContasPagar() {
+        try {
+            const snapshot = await db.collection('contas_pagar').orderBy('dataCadastro', 'desc').get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error("Erro ao obter contas a pagar:", error);
+            return [];
+        }
+    }
+
+    static async toggleParcelaPaga(contaId, numeroParcela) {
+        try {
+            const contaRef = db.collection('contas_pagar').doc(contaId);
+            const doc = await contaRef.get();
+            
+            if (doc.exists) {
+                const conta = doc.data();
+                const parcelas = conta.parcelas.map(parcela => {
+                    if (parcela.numero === numeroParcela) {
+                        return {
+                            ...parcela,
+                            paga: !parcela.paga,
+                            dataPagamento: !parcela.paga ? new Date().toISOString() : null
+                        };
+                    }
+                    return parcela;
+                });
+                
+                await contaRef.update({ parcelas });
+            }
+        } catch (error) {
+            console.error("Erro ao atualizar parcela:", error);
+            throw error;
+        }
+    }
+
+    static async salvarCliente(cliente) {
+        try {
+            const docRef = await db.collection('clientes').add({
+                ...cliente,
+                dataCadastro: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return docRef.id;
+        } catch (error) {
+            console.error("Erro ao salvar cliente:", error);
+            throw error;
+        }
+    }
+
+    static async obterClientes() {
+        try {
+            const snapshot = await db.collection('clientes').orderBy('nome').get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error("Erro ao obter clientes:", error);
+            return [];
+        }
+    }
+
+    static async atualizarCliente(clienteId, dadosAtualizados) {
+        try {
+            await db.collection('clientes').doc(clienteId).update({
+                ...dadosAtualizados,
+                dataAtualizacao: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (error) {
+            console.error("Erro ao atualizar cliente:", error);
+            throw error;
+        }
+    }
+
+    static async buscarClientePorCPF(cpf) {
+        try {
+            const snapshot = await db.collection('clientes')
+                .where('cpf', '==', cpf)
+                .limit(1)
+                .get();
+            
+            if (!snapshot.empty) {
+                return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+            }
+            return null;
+        } catch (error) {
+            console.error("Erro ao buscar cliente por CPF:", error);
+            return null;
+        }
+    }
+
+    static async salvarOuAtualizarCliente(cliente) {
+        try {
+            if (cliente.cpf) {
+                const clienteExistente = await this.buscarClientePorCPF(cliente.cpf);
+                if (clienteExistente) {
+                    await this.atualizarCliente(clienteExistente.id, cliente);
+                    return clienteExistente.id;
+                } else {
+                    return await this.salvarCliente(cliente);
+                }
+            } else {
+                return await this.salvarCliente(cliente);
+            }
+        } catch (error) {
+            console.error("Erro ao salvar ou atualizar cliente:", error);
             throw error;
         }
     }

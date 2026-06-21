@@ -10,10 +10,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
     <style>
         .historico-container {
-            background: white;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 2rem;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin-top: 2rem;
         }
         .filtros {
@@ -23,11 +23,12 @@
             align-items: end;
         }
         .acao-item {
-            border: 1px solid #ddd;
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1rem;
             margin: 1rem 0;
             border-radius: 4px;
             border-left: 4px solid #007bff;
+            color: #f0f0f0;
         }
         .acao-item.NOVA_VENDA { border-left-color: #28a745; }
         .acao-item.EDICAO_VENDA { border-left-color: #ffc107; }
@@ -46,17 +47,18 @@
             font-size: 0.8rem;
             color: white;
         }
-        .NOVA_VENDA { background: #28a745; }
+        .NOVA_VENDA { background: #28a745; color: #000; }
         .EDICAO_VENDA { background: #ffc107; color: #000; }
-        .ATUALIZACAO_VENDA { background: #17a2b8; }
-        .CANCELAMENTO_VENDA { background: #dc3545; }
+        .ATUALIZACAO_VENDA { background: #17a2b8; color: #000; }
+        .CANCELAMENTO_VENDA { background: #dc3545; color: #000; }
         .acao-detalhes {
             font-size: 0.9rem;
-            color: #666;
+            color: #f0f0f0;
             margin-top: 0.5rem;
         }
         .resumo-acoes {
-            background: #f8f9fa;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1.5rem;
             border-radius: 8px;
             margin-bottom: 2rem;
@@ -69,11 +71,11 @@
         .resumo-valor {
             font-size: 1.5rem;
             font-weight: bold;
-            color: #007bff;
+            color: #ff4500;
         }
         .resumo-label {
             font-size: 0.9rem;
-            color: #666;
+            color: #888;
         }
     </style>
 </head>
@@ -84,8 +86,11 @@
         </div>
     </header>
 
+    <button class="menu-toggle" id="menuToggle">&#9654;</button>
+
+    <button onclick="history.back()" style="position:fixed;top:calc(var(--header-height) + 12px);right:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#888;padding:0.4rem 0.9rem;border-radius:8px;cursor:pointer;font-size:0.82rem;font-family:Inter,sans-serif;z-index:1001;transition:all 0.2s;" class="btn-voltar" onmouseover="this.style.color='#f0f0f0'" onmouseout="this.style.color='#888'">&#8592; Voltar</button>
+
     <div class="sidebar" id="sidebar">
-        <button class="menu-toggle" id="menuToggle">☰</button>
         <nav class="nav-menu">
             <ul>
                 <li><a href="../index.html">Início</a></li>
@@ -177,40 +182,28 @@
                 
                 document.getElementById('menuUsuarios').style.display = 'block';
                 document.getElementById('menuHistorico').style.display = 'block';
+
+                // Definir datas padrão
+                const hoje = new Date();
+                const seteDiasAtras = new Date();
+                seteDiasAtras.setDate(hoje.getDate() - 7);
+                document.getElementById('dataFim').value = hoje.toISOString().split('T')[0];
+                document.getElementById('dataInicio').value = seteDiasAtras.toISOString().split('T')[0];
+
                 carregarHistorico();
             }
         });
 
-        function logout() {
-            firebase.auth().signOut().then(() => {
-                window.location.href = '../login.html';
-            });
-        }
-
-        // Aguardar Firebase estar pronto
-        function aguardarFirebase() {
-            return new Promise((resolve) => {
-                if (typeof db !== 'undefined' && db) {
-                    resolve();
-                } else {
-                    setTimeout(() => aguardarFirebase().then(resolve), 100);
-                }
-            });
-        }
-
         async function carregarHistorico() {
             try {
-                await aguardarFirebase();
-                console.log('Carregando histórico...');
-                const snapshot = await db.collection('historico').orderBy('data', 'desc').get();
+                const snapshot = await db.collection('historico').orderBy('data', 'desc').limit(100).get();
                 todasAcoes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                console.log('Histórico carregado:', todasAcoes.length, 'registros');
                 acoesFiltradas = [...todasAcoes];
                 exibirHistorico();
                 atualizarResumo();
             } catch (error) {
                 console.error('Erro ao carregar histórico:', error);
-                document.getElementById('listaHistorico').innerHTML = '<p>Erro ao carregar histórico. Verifique o console.</p>';
+                document.getElementById('listaHistorico').innerHTML = '<p>Erro ao carregar histórico.</p>';
             }
         }
 
@@ -309,7 +302,7 @@
                                 <span class="acao-tipo ${acao.acao}">${getTipoAcaoTexto(acao.acao)}</span>
                                 <span style="margin-left: 1rem; font-weight: bold;">${acao.usuario}</span>
                             </div>
-                            <div style="font-size: 0.9rem; color: #666;">
+                            <div style="font-size: 0.9rem; color: #888;">
                                 ${dataFormatada} às ${horaFormatada}
                             </div>
                         </div>
@@ -342,14 +335,7 @@
         }
 
         // Definir data padrão (últimos 7 dias)
-        window.onload = function() {
-            const hoje = new Date();
-            const seteDiasAtras = new Date();
-            seteDiasAtras.setDate(hoje.getDate() - 7);
-            
-            document.getElementById('dataFim').value = hoje.toISOString().split('T')[0];
-            document.getElementById('dataInicio').value = seteDiasAtras.toISOString().split('T')[0];
-        }
+        window.onload = function() {}
     </script>
 </body>
 </html>

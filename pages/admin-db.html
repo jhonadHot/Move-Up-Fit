@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin DB - Move Up Fit</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <style>
+        .admin-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .admin-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .admin-header h1 {
+            color: #ff4500;
+            font-weight: 300;
+            font-size: 1.8rem;
+        }
+
+        .badge-admin {
+            background: rgba(255,69,0,0.15);
+            border: 1px solid rgba(255,69,0,0.3);
+            color: #ff4500;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .db-layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Painel esquerdo - coleções */
+        .collections-panel {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 1rem;
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .collections-panel h3 {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #555;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .collection-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            background: none;
+            border: none;
+            border-radius: 8px;
+            color: #888;
+            font-size: 0.85rem;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            margin-bottom: 2px;
+        }
+
+        .collection-btn:hover {
+            background: rgba(255,69,0,0.08);
+            color: #ff4500;
+        }
+
+        .collection-btn.active {
+            background: rgba(255,69,0,0.12);
+            color: #ff4500;
+            font-weight: 600;
+        }
+
+        .collection-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #444;
+            flex-shrink: 0;
+        }
+
+        .collection-btn.active .collection-dot,
+        .collection-btn:hover .collection-dot {
+            background: #ff4500;
+        }
+
+        /* Painel direito - dados */
+        .data-panel {
+            min-width: 0;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .toolbar input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.6rem 1rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            color: #f0f0f0;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .toolbar input:focus {
+            outline: none;
+            border-color: #ff4500;
+        }
+
+        .toolbar input::placeholder { color: #444; }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.82rem;
+            border-radius: 7px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background: #ff4500; color: white; }
+        .btn-primary:hover { background: #cc3700; }
+        .btn-danger { background: rgba(220,53,69,0.2); color: #ff6b6b; border: 1px solid rgba(220,53,69,0.3); }
+        .btn-danger:hover { background: rgba(220,53,69,0.35); }
+        .btn-success { background: rgba(40,167,69,0.2); color: #51cf66; border: 1px solid rgba(40,167,69,0.3); }
+        .btn-success:hover { background: rgba(40,167,69,0.35); }
+        .btn-info { background: rgba(0,123,255,0.2); color: #74c0fc; border: 1px solid rgba(0,123,255,0.3); }
+        .btn-info:hover { background: rgba(0,123,255,0.35); }
+
+        .stats-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+            color: #555;
+        }
+
+        .stats-bar span { color: #888; }
+        .stats-bar strong { color: #ff4500; }
+
+        /* Tabela */
+        .table-wrapper {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            overflow: auto;
+            max-height: 60vh;
+        }
+
+        .db-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        .db-table th {
+            background: rgba(255,69,0,0.08) !important;
+            color: #ff4500 !important;
+            padding: 0.7rem 1rem !important;
+            text-align: left;
+            font-size: 0.75rem !important;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+        }
+
+        .db-table td {
+            padding: 0.65rem 1rem !important;
+            border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+            color: #ccc;
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .db-table tr:hover td {
+            background: rgba(255,69,0,0.04) !important;
+            cursor: pointer;
+        }
+
+        .td-id {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #555 !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #444;
+        }
+
+        .empty-state span {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Modal de edição */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #0f0f18;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 700px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-box h3 {
+            color: #ff4500;
+            margin-bottom: 1.5rem;
+            font-weight: 400;
+            font-size: 1.1rem;
+        }
+
+        .json-editor {
+            width: 100%;
+            min-height: 300px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            color: #a8d8a8;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            padding: 1rem;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .json-editor:focus {
+            outline: none;
+            border-color: #ff4500;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            justify-content: flex-end;
+        }
+
+        .doc-id-display {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #555;
+            background: rgba(255,255,255,0.03);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .db-layout { grid-template-columns: 1fr; }
+            .collections-panel { position: static; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="../assets/images/Move Up.png" alt="Move Up Fit">
+        </div>
+    </header>
+
+        <button class="menu-toggle" id="menuToggle">&#9654;</button>
+
+    <button onclick="history.back()" style="position:fixed;top:calc(var(--header-height) + 12px);right:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#888;padding:0.4rem 0.9rem;border-radius:8px;cursor:pointer;font-size:0.82rem;font-family:Inter,sans-serif;z-index:1001;transition:all 0.2s;" class="btn-voltar" onmouseover="this.style.color='#f0f0f0'" onmouseout="this.style.color='#888'">&#8592; Voltar</button>
+
+    <div class=sidebar id=sidebar>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Início</a></li>
+                <li><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                <li><a href="backup.html">Backup</a></li>
+                <li><a href="historico.html">Histórico de Ações</a></li>
+                <li><a href="admin-db.html" style="color: #ff4500;">Admin DB</a></li>
+                <li><a href="#" onclick="logout()" style="color: #ff6b6b; margin-top: 1rem;">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <main class="main-content">
+        <div class="admin-wrapper">
+            <div class="admin-header">
+                <h1>🗄️ Admin Database</h1>
+                <span class="badge-admin">Master Only</span>
+            </div>
+
+            <div class="db-layout">
+                <!-- Coleções -->
+                <div class="collections-panel">
+                    <h3>Coleções</h3>
+                    <button class="collection-btn" onclick="carregarColecao('pecas')"><span class="collection-dot"></span>pecas</button>
+                    <button class="collection-btn" onclick="carregarColecao('vendas')"><span class="collection-dot"></span>vendas</button>
+                    <button class="collection-btn" onclick="carregarColecao('marcas')"><span class="collection-dot"></span>marcas</button>
+                    <button class="collection-btn" onclick="carregarColecao('maquinas')"><span class="collection-dot"></span>maquinas</button>
+                    <button class="collection-btn" onclick="carregarColecao('pix')"><span class="collection-dot"></span>pix</button>
+                    <button class="collection-btn" onclick="carregarColecao('clientes')"><span class="collection-dot"></span>clientes</button>
+                    <button class="collection-btn" onclick="carregarColecao('usuarios')"><span class="collection-dot"></span>usuarios</button>
+                    <button class="collection-btn" onclick="carregarColecao('contas_pagar')"><span class="collection-dot"></span>contas_pagar</button>
+                    <button class="collection-btn" onclick="carregarColecao('historico')"><span class="collection-dot"></span>historico</button>
+                    <button class="collection-btn" onclick="carregarColecao('pagamentos_parcelas')"><span class="collection-dot"></span>pagamentos_parcelas</button>
+
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06);">
+                        <h3>Coleção Custom</h3>
+                        <input type="text" id="customColecao" placeholder="nome da coleção"
+                            style="width:100%; padding:0.5rem 0.7rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:6px; color:#f0f0f0; font-family:Inter,sans-serif; font-size:0.82rem; margin-bottom:0.5rem;">
+                        <button class="btn-sm btn-primary" style="width:100%;" onclick="carregarColecaoCustom()">Buscar</button>
+                    </div>
+                </div>
+
+                <!-- Dados -->
+                <div class="data-panel">
+                    <div class="toolbar">
+                        <input type="text" id="searchInput" placeholder="🔍 Pesquisar em qualquer campo..." oninput="filtrarDados()">
+                        <button class="btn-sm btn-success" onclick="abrirModalNovo()">+ Novo Documento</button>
+                        <button class="btn-sm btn-info" onclick="exportarJSON()">⬇ Exportar JSON</button>
+                    </div>
+
+                    <div class="stats-bar" id="statsBar">
+                        <span>Selecione uma coleção para começar</span>
+                    </div>
+
+                    <div class="table-wrapper" id="tableWrapper">
+                        <div class="empty-state">
+                            <span>🗄️</span>
+                            Selecione uma coleção na lateral
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Editar/Criar -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <h3 id="modalTitle">Editar Documento</h3>
+            <div class="doc-id-display" id="docIdDisplay"></div>
+            <textarea class="json-editor" id="jsonEditor" spellcheck="false"></textarea>
+            <div class="modal-footer">
+                <button class="btn-sm btn-danger" id="btnDeletar" onclick="deletarDocumento()">🗑 Deletar</button>
+                <button class="btn-sm" onclick="fecharModal()" style="background:rgba(255,255,255,0.06); color:#888;">Cancelar</button>
+                <button class="btn-sm btn-primary" onclick="salvarDocumento()">💾 Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script>
+        let colecaoAtual = '';
+        let todosDocumentos = [];
+        let documentoEditando = null;
+        let colunas = [];
+
+        firebase.auth().onAuthStateChanged(async function(user) {
+            if (!user) return window.location.href = '../login.html';
+            const nivel = await FirebaseDatabase.obterNivelUsuario(user.uid);
+            if (nivel !== 'master') {
+                alert('Acesso negado.');
+                window.location.href = '../index.html';
+            }
+        });
+
+        function logout() {
+            firebase.auth().signOut().then(() => window.location.href = '../login.html');
+        }
+
+        async function carregarColecao(nome) {
+            colecaoAtual = nome;
+
+            // Atualizar botão ativo
+            document.querySelectorAll('.collection-btn').forEach(b => b.classList.remove('active'));
+            event && event.target && event.target.closest('.collection-btn') && event.target.closest('.collection-btn').classList.add('active');
+
+            document.getElementById('tableWrapper').innerHTML = '<div class="loading">Carregando...</div>';
+            document.getElementById('statsBar').innerHTML = '<span>Carregando...</span>';
+
+            try {
+                const snapshot = await db.collection(nome).get();
+                todosDocumentos = snapshot.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
+                renderizarTabela(todosDocumentos);
+            } catch(e) {
+                document.getElementById('tableWrapper').innerHTML = `<div class="empty-state"><span>❌</span>${e.message}</div>`;
+            }
+        }
+
+        function carregarColecaoCustom() {
+            const nome = document.getElementById('customColecao').value.trim();
+            if (!nome) return;
+            carregarColecao(nome);
+        }
+
+        function renderizarTabela(docs) {
+            document.getElementById('statsBar').innerHTML =
+                `Coleção: <strong>${colecaoAtual}</strong> &nbsp;|&nbsp; <strong>${docs.length}</strong> documentos`;
+
+            if (docs.length === 0) {
+                document.getElementById('tableWrapper').innerHTML = '<div class="empty-state"><span>📭</span>Nenhum documento encontrado</div>';
+                return;
+            }
+
+            // Descobrir colunas
+            const camposSet = new Set(['_id']);
+            docs.forEach(doc => Object.keys(doc).forEach(k => camposSet.add(k)));
+            colunas = Array.from(camposSet).slice(0, 8); // máx 8 colunas
+
+            const thead = `<thead><tr>${colunas.map(c => `<th>${c}</th>`).join('')}<th>Ações</th></tr></thead>`;
+
+            const tbody = `<tbody>${docs.map(doc => {
+                const cells = colunas.map(col => {
+                    let val = doc[col];
+                    if (val === undefined) return '<td>—</td>';
+                    if (typeof val === 'object' && val !== null) {
+                        if (val.seconds) val = new Date(val.seconds * 1000).toLocaleDateString('pt-BR');
+                        else val = JSON.stringify(val).substring(0, 50) + '...';
+                    }
+                    if (typeof val === 'string' && val.length > 40) val = val.substring(0, 40) + '...';
+                    const cls = col === '_id' ? 'td-id' : '';
+                    return `<td class="${cls}" title="${String(val)}">${val}</td>`;
+                }).join('');
+                return `<tr onclick="abrirModalEdicao('${doc._id}')">${cells}<td><button class="btn-sm btn-danger" onclick="event.stopPropagation(); confirmarDelete('${doc._id}')">🗑</button></td></tr>`;
+            }).join('')}</tbody>`;
+
+            document.getElementById('tableWrapper').innerHTML = `<table class="db-table">${thead}${tbody}</table>`;
+        }
+
+        function filtrarDados() {
+            const termo = document.getElementById('searchInput').value.toLowerCase();
+            if (!termo) return renderizarTabela(todosDocumentos);
+            const filtrados = todosDocumentos.filter(doc =>
+                JSON.stringify(doc).toLowerCase().includes(termo)
+            );
+            renderizarTabela(filtrados);
+        }
+
+        function abrirModalEdicao(docId) {
+            const doc = todosDocumentos.find(d => d._id === docId);
+            if (!doc) return;
+
+            documentoEditando = docId;
+            const { _id, ...dados } = doc;
+
+            document.getElementById('modalTitle').textContent = 'Editar Documento';
+            document.getElementById('docIdDisplay').textContent = 'ID: ' + docId;
+            document.getElementById('btnDeletar').style.display = 'inline-block';
+            document.getElementById('jsonEditor').value = JSON.stringify(dados, null, 2);
+            document.getElementById('modalOverlay').classList.add('show');
+        }
+
+        function abrirModalNovo() {
+            if (!colecaoAtual) return alert('Selecione uma coleção primeiro.');
+            documentoEditando = null;
+            document.getElementById('modalTitle').textContent = 'Novo Documento';
+            document.getElementById('docIdDisplay').textContent = 'ID: (gerado automaticamente)';
+            document.getElementById('btnDeletar').style.display = 'none';
+            document.getElementById('jsonEditor').value = '{\n  \n}';
+            document.getElementById('modalOverlay').classList.add('show');
+        }
+
+        function fecharModal() {
+            document.getElementById('modalOverlay').classList.remove('show');
+            documentoEditando = null;
+        }
+
+        async function salvarDocumento() {
+            try {
+                const json = JSON.parse(document.getElementById('jsonEditor').value);
+
+                if (documentoEditando) {
+                    await db.collection(colecaoAtual).doc(documentoEditando).update(json);
+                    alert('Documento atualizado!');
+                } else {
+                    await db.collection(colecaoAtual).add(json);
+                    alert('Documento criado!');
+                }
+
+                fecharModal();
+                carregarColecao(colecaoAtual);
+            } catch(e) {
+                alert('Erro: ' + e.message);
+            }
+        }
+
+        async function deletarDocumento() {
+            if (!confirm('Tem certeza que deseja deletar este documento? Esta ação não pode ser desfeita.')) return;
+            try {
+                await db.collection(colecaoAtual).doc(documentoEditando).delete();
+                alert('Documento deletado!');
+                fecharModal();
+                carregarColecao(colecaoAtual);
+            } catch(e) {
+                alert('Erro: ' + e.message);
+            }
+        }
+
+        async function confirmarDelete(docId) {
+            if (!confirm('Deletar este documento?')) return;
+            try {
+                await db.collection(colecaoAtual).doc(docId).delete();
+                carregarColecao(colecaoAtual);
+            } catch(e) {
+                alert('Erro: ' + e.message);
+            }
+        }
+
+        function exportarJSON() {
+            if (!todosDocumentos.length) return alert('Nenhum dado para exportar.');
+            const blob = new Blob([JSON.stringify(todosDocumentos, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `${colecaoAtual}-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        }
+
+        // Fechar modal ao clicar fora
+        document.getElementById('modalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) fecharModal();
+        });
+    </script>
+</body>
+</html>

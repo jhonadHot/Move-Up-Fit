@@ -17,36 +17,38 @@
         }
         .busca-produto {
             flex: 1;
-            background: white;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1.5rem;
             border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         .carrinho {
             flex: 1;
-            background: white;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1.5rem;
             border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         .produto-item {
-            border: 1px solid #ddd;
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1rem;
             margin: 0.5rem 0;
             border-radius: 4px;
             cursor: pointer;
+            color: #f0f0f0;
         }
         .produto-item:hover {
-            background-color: #f5f5f5;
+            background: rgba(255,69,0,0.08);
         }
         .carrinho-item {
-            border: 1px solid #ddd;
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1rem;
             margin: 0.5rem 0;
-            border-radius: 4px;
+            border-radius: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            color: #f0f0f0;
         }
         .total-venda {
             font-size: 1.2rem;
@@ -65,8 +67,11 @@
         </div>
     </header>
 
-    <div class="sidebar" id="sidebar">
-        <button class="menu-toggle" id="menuToggle">☰</button>
+    <button class="menu-toggle" id="menuToggle">&#9654;</button>
+
+    <button onclick="history.back()" style="position:fixed;top:calc(var(--header-height) + 12px);right:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#888;padding:0.4rem 0.9rem;border-radius:8px;cursor:pointer;font-size:0.82rem;font-family:Inter,sans-serif;z-index:1001;transition:all 0.2s;" class="btn-voltar" onmouseover="this.style.color='#f0f0f0'" onmouseout="this.style.color='#888'">&#8592; Voltar</button>
+
+ <div class="sidebar" id="sidebar">
         <nav class="nav-menu">
             <ul>
                 <li><a href="../index.html">Início</a></li>
@@ -87,9 +92,11 @@
                         <li><a href="relatorio-financeiro.html">Financeiro</a></li>
                         <li><a href="relatorio-vendas.html">Vendas</a></li>
                         <li><a href="relatorio-analitico.html">Analítico</a></li>
+                        <li><a href="relatorio-clientes.html">Clientes</a></li>
                     </ul>
                 </li>
                 <li><a href="vendas.html">Vendas</a></li>
+                <li><a href="contas-pagar.html">Contas a Pagar</a></li>
                 <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
             </ul>
         </nav>
@@ -100,7 +107,7 @@
         
         <!-- Seletor de Tipo de Operação -->
         <div style="display: flex; justify-content: center; margin-bottom: 2rem;">
-            <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 400px;">
+            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); padding: 1.5rem; border-radius: 15px; text-align: center; max-width: 400px;">
                 <label style="margin-right: 2rem; font-size: 1.1rem; cursor: pointer;">
                     <input type="radio" name="tipoOperacao" value="venda" checked onchange="alterarTipoOperacao()" style="margin-right: 8px;"> Venda Normal
                 </label>
@@ -111,7 +118,7 @@
         </div>
         
         <!-- Dados do Cliente/Usuário - Bloco Separado -->
-        <div class="cliente-container" id="clienteContainer" style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 2rem; max-width: 900px; margin-left: auto; margin-right: auto;">
+        <div class="cliente-container" id="clienteContainer" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); padding: 1.5rem; border-radius: 15px; margin-bottom: 2rem; max-width: 900px; margin-left: auto; margin-right: auto;">
             <h3 id="tituloCliente" style="color: #ff4500; border-bottom: 2px solid #ff4500; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">Dados do Cliente</h3>
             
             <!-- Seletor de Usuário para Retirada -->
@@ -130,7 +137,7 @@
                 <div class="form-group" style="position: relative;">
                     <label for="nomeCliente">Nome Completo: <span style="color: red;">*</span></label>
                     <input type="text" id="nomeCliente" placeholder="Nome completo do cliente" required autocomplete="off">
-                    <div id="sugestoesClientes" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; z-index: 1000;"></div>
+                    <div id="sugestoesClientes" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: rgba(15,15,20,0.98); border: 1px solid rgba(255,255,255,0.1); border-top: none; max-height: 200px; overflow-y: auto; z-index: 1000; border-radius: 0 0 8px 8px;"></div>
                     <small id="nomeError" style="color: red; display: none;">Nome deve ter pelo menos dois nomes</small>
                 </div>
                 <div class="form-group">
@@ -146,8 +153,8 @@
                     <small id="telefoneError" style="color: red; display: none;">Telefone inválido</small>
                 </div>
                 <div class="form-group">
-                    <label for="cpfCliente">CPF: <span style="color: red;">*</span></label>
-                    <input type="text" id="cpfCliente" placeholder="000.000.000-00" required>
+                    <label for="cpfCliente">CPF:</label>
+                    <input type="text" id="cpfCliente" placeholder="000.000.000-00">
                     <small id="cpfError" style="color: red; display: none;">CPF inválido</small>
                 </div>
             </div>
@@ -190,7 +197,7 @@
                         </label>
                     </div>
                     
-                    <div id="opcoesEntrada" style="display: none; border: 2px solid #ff4500; background-color: #fff3e6; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                    <div id="opcoesEntrada" style="display: none; border: 2px solid #ff4500; background: rgba(255,69,0,0.08); padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
                         <h4 style="margin-top: 0; color: #ff4500;">Entrada</h4>
                         
                         <div class="form-group">
@@ -387,6 +394,68 @@
                 carregarUsuarios();
                 carregarMaquinas();
                 await carregarPixPrincipal();
+
+                document.getElementById('nomeCliente').addEventListener('input', async function() {
+                const nome = this.value;
+                if (nome.length < 2) {
+                    document.getElementById('sugestoesClientes').style.display = 'none';
+                    return;
+                }
+                
+                try {
+                    const vendas = await FirebaseDatabase.obterVendas();
+                    const clientesMap = new Map();
+                    
+                    vendas.forEach(venda => {
+                        if (venda.cliente && venda.cliente.nome && venda.cliente.nome.toLowerCase().includes(nome.toLowerCase())) {
+                            const cpf = venda.cliente.cpf || 'sem-cpf-' + Math.random();
+                            clientesMap.set(cpf, venda.cliente);
+                        }
+                    });
+                    
+                    const clientes = Array.from(clientesMap.values()).slice(0, 5);
+                    
+                    if (clientes.length > 0) {
+                        const container = document.getElementById('sugestoesClientes');
+                        container.innerHTML = clientes.map(cliente => `
+                            <div style="padding: 0.5rem; cursor: pointer; border-bottom: 1px solid #eee; background: white;" 
+                                onclick="preencherCliente('${cliente.nome}', '${cliente.cpf || ''}', '${cliente.telefone || ''}', '${cliente.email || ''}')">
+                                <strong>${cliente.nome}</strong>
+                                ${cliente.cpf ? `<br><small>CPF: ${cliente.cpf}</small>` : ''}
+                            </div>
+                        `).join('');
+                        container.style.display = 'block';
+                    } else {
+                        document.getElementById('sugestoesClientes').style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar clientes:', error);
+                }
+            });
+
+            document.getElementById('cpfCliente').addEventListener('input', async function() {
+                aplicarMascaraCPF(this);
+                const cpfLimpo = this.value.replace(/\D/g, '');
+                if (cpfLimpo.length === 11) {
+                    try {
+                        const vendas = await FirebaseDatabase.obterVendas();
+                        const venda = vendas.find(v => v.cliente && v.cliente.cpf === cpfLimpo);
+                        if (venda && venda.cliente) {
+                            document.getElementById('nomeCliente').value = venda.cliente.nome || '';
+                            document.getElementById('telefoneCliente').value = venda.cliente.telefone || '';
+                            document.getElementById('emailCliente').value = venda.cliente.email || '';
+                        }
+                    } catch (error) {
+                        console.error('Erro ao buscar cliente por CPF:', error);
+                    }
+                }
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#nomeCliente') && !e.target.closest('#sugestoesClientes')) {
+                    document.getElementById('sugestoesClientes').style.display = 'none';
+                }
+            });
                 
                 // Verificar se é edição de venda
                 const urlParams = new URLSearchParams(window.location.search);
@@ -705,8 +774,8 @@
             
             // Calcular máximo de parcelas baseado no valor (mínimo R$ 100 por parcela)
             let maxParcelas = 1;
-            if (saldoRestante >= 200) maxParcelas = 2;
-            if (saldoRestante >= 300) maxParcelas = 3;
+            if (saldoRestante >= 110) maxParcelas = 2;
+            if (saldoRestante >= 250) maxParcelas = 3;
             if (saldoRestante >= 400) maxParcelas = 4;
             
             // Adicionar opções de parcelamento
@@ -753,7 +822,7 @@
             document.getElementById('bandeiraCartao').value = '';
             
             // Mostrar/esconder desconto baseado na forma de pagamento
-            if (formaPagamento === 'avista') {
+            if (formaPagamento === 'avista' || formaPagamento === 'crediario') {
                 descontoGroup.style.display = 'block';
             } else {
                 descontoGroup.style.display = 'none';
@@ -1259,37 +1328,13 @@
                     dadosPagamento.parcelas = document.getElementById('parcelasCrediario').value;
                 }
                 
-                // Atualizar estoque apenas se não for edição
-                if (!vendaEditandoId) {
-                    // Nova venda - diminuir estoque
-                    for (const item of carrinho) {
-                        const novoEstoque = item.estoque - item.quantidade;
+                // Atualizar estoque - sempre diminuir do estoque atual
+                // (O estoque já foi restaurado no carregarVendaParaEdicao se for edição)
+                for (const item of carrinho) {
+                    const produto = produtosDisponiveis.find(p => p.id === item.id);
+                    if (produto) {
+                        const novoEstoque = produto.estoque - item.quantidade;
                         await FirebaseDatabase.atualizarEstoque(item.id, novoEstoque);
-                    }
-                } else {
-                    // Edição - ajustar estoque baseado na diferença
-                    for (const item of carrinho) {
-                        const itemOriginal = vendaOriginal.itens.find(i => i.produtoId === item.id);
-                        const quantidadeOriginal = itemOriginal ? itemOriginal.quantidade : 0;
-                        const diferenca = item.quantidade - quantidadeOriginal;
-                        
-                        if (diferenca !== 0) {
-                            const novoEstoque = item.estoque - diferenca;
-                            await FirebaseDatabase.atualizarEstoque(item.id, novoEstoque);
-                        }
-                    }
-                    
-                    // Restaurar estoque de itens removidos
-                    for (const itemOriginal of vendaOriginal.itens) {
-                        const itemAtual = carrinho.find(i => i.id === itemOriginal.produtoId);
-                        if (!itemAtual) {
-                            // Item foi removido, restaurar estoque
-                            const produto = produtosDisponiveis.find(p => p.id === itemOriginal.produtoId);
-                            if (produto) {
-                                const novoEstoque = produto.estoque + itemOriginal.quantidade;
-                                await FirebaseDatabase.atualizarEstoque(itemOriginal.produtoId, novoEstoque);
-                            }
-                        }
                     }
                 }
 
@@ -1300,6 +1345,9 @@
                     telefone: document.getElementById('telefoneCliente').value,
                     cpf: document.getElementById('cpfCliente').value
                 };
+                
+                // Salvar ou atualizar cliente no banco de dados
+                await FirebaseDatabase.salvarOuAtualizarCliente(cliente);
                 
                 // Registrar ou atualizar venda
                 const venda = {
@@ -1413,6 +1461,20 @@
                 vendaEditandoId = vendaId;
                 vendaOriginal = venda;
 
+                // PRIMEIRO: Restaurar estoque dos itens da venda original
+                for (const item of venda.itens) {
+                    const produto = produtosDisponiveis.find(p => p.id === item.produtoId);
+                    if (produto) {
+                        const novoEstoque = produto.estoque + item.quantidade;
+                        await FirebaseDatabase.atualizarEstoque(item.produtoId, novoEstoque);
+                        // Atualizar também no array local
+                        produto.estoque = novoEstoque;
+                    }
+                }
+
+                // Recarregar produtos para ter estoques atualizados
+                await carregarProdutos();
+
                 // Carregar dados do cliente
                 if (venda.cliente) {
                     document.getElementById('nomeCliente').value = venda.cliente.nome || '';
@@ -1424,7 +1486,7 @@
                 // Carregar itens no carrinho
                 carrinho = [];
                 for (const item of venda.itens) {
-                    // Encontrar produto nos disponíveis
+                    // Encontrar produto nos disponíveis (com estoque já restaurado)
                     const produto = produtosDisponiveis.find(p => p.id === item.produtoId);
                     if (produto) {
                         carrinho.push({
@@ -1569,10 +1631,10 @@
                 telefoneError.style.display = 'none';
             }
             
-            // Validar CPF
+            // Validar CPF (apenas se preenchido)
             const cpf = document.getElementById('cpfCliente').value;
             const cpfError = document.getElementById('cpfError');
-            if (!validarCPF(cpf)) {
+            if (cpf && !validarCPF(cpf)) {
                 cpfError.style.display = 'block';
                 valido = false;
             } else {
@@ -1683,8 +1745,8 @@
             sugestoes.innerHTML = clientes.map(cliente => 
                 `<div style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee;" 
                       onclick="selecionarCliente('${cliente.cpf}')" 
-                      onmouseover="this.style.backgroundColor='#f5f5f5'" 
-                      onmouseout="this.style.backgroundColor='white'">
+                      onmouseover="this.style.backgroundColor='rgba(255,69,0,0.08)'" 
+                      onmouseout="this.style.backgroundColor='transparent'">
                     <strong>${cliente.nome}</strong><br>
                     <small>CPF: ${cliente.cpf} | Tel: ${cliente.telefone}</small>
                 </div>`
@@ -1726,6 +1788,15 @@
                 sugestoes.style.display = 'none';
             }
         });
+
+        function preencherCliente(nome, cpf, telefone, email) {
+            document.getElementById('nomeCliente').value = nome;
+            document.getElementById('cpfCliente').value = cpf;
+            document.getElementById('telefoneCliente').value = telefone;
+            document.getElementById('emailCliente').value = email;
+            document.getElementById('sugestoesClientes').style.display = 'none';
+        }
+
     </script>
 </body>
 </html>

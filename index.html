@@ -3,11 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestão</title>
+    <title>Sistema de Gestão - Move Up Fit</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <style>
+        .dashboard-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .dashboard-header {
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-header h2 {
+            font-size: 1.6rem;
+            font-weight: 300;
+            color: #f0f0f0;
+            letter-spacing: 0.5px;
+        }
+
+        .dashboard-header span {
+            color: #ff4500;
+            font-weight: 600;
+        }
+
+        .dashboard-header p {
+            color: #555;
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+        }
+
+        .divider-line {
+            height: 1px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+            margin-bottom: 2rem;
+            opacity: 0.4;
+        }
+
+        /* Cards grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 16px;
+            padding: 1.6rem 1.4rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: visible;
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,69,0,0.06), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .dashboard-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s;
+        }
+
+        .dashboard-card:hover {
+            border-color: rgba(255, 69, 0, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(255, 69, 0, 0.12);
+        }
+
+        .dashboard-card:hover::before { opacity: 1; }
+        .dashboard-card:hover::after { transform: scaleX(1); }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: block;
+            filter: drop-shadow(0 0 6px rgba(255,69,0,0.3));
+        }
+
+        .dashboard-card h3 {
+            color: #f0f0f0;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+
+        .dashboard-card p {
+            color: #555;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        /* Modal de seleção */
+        .modal-selecao {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            z-index: 500;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-selecao.show {
+            display: flex;
+        }
+
+        .modal-selecao-box {
+            background: rgba(15,15,20,0.98);
+            border: 1px solid rgba(255,69,0,0.3);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 420px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,69,0,0.1);
+            animation: modalIn 0.2s ease-out;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-selecao-titulo {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #ff4500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255,69,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-selecao-opcoes {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .modal-selecao-opcao {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.9rem 1rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            color: #ccc;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .modal-selecao-opcao:hover {
+            background: rgba(255,69,0,0.1);
+            border-color: rgba(255,69,0,0.3);
+            color: #ff4500;
+            transform: translateX(4px);
+        }
+
+        .modal-selecao-opcao span.icone {
+            font-size: 1.2rem;
+            width: 28px;
+            text-align: center;
+        }
+
+        .modal-fechar {
+            margin-top: 1rem;
+            width: 100%;
+            padding: 0.7rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            color: #666;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .modal-fechar:hover { color: #aaa; background: rgba(255,255,255,0.08); }
+
+        /* Tag badge */
+        .card-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--primary);
+            background: rgba(255, 69, 0, 0.1);
+            border: 1px solid rgba(255, 69, 0, 0.2);
+            border-radius: 20px;
+            padding: 0.2rem 0.6rem;
+        }
+
+        /* Bottom bar */
+        .bottom-bar {
+            margin-top: 3rem;
+            padding: 1rem 1.5rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .bottom-bar span {
+            font-size: 0.8rem;
+            color: #444;
+        }
+
+        .bottom-bar strong { color: #666; }
+
+        .status-dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            background: #00d084;
+            border-radius: 50%;
+            margin-right: 6px;
+            box-shadow: 0 0 6px #00d084;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .submenu-dashboard {
+                position: relative;
+                top: auto;
+                margin-top: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
     <header class="header">
@@ -16,8 +285,9 @@
         </div>
     </header>
 
+    <button class="menu-toggle" id="menuToggle">▶</button>
+
     <div class="sidebar" id="sidebar">
-        <button class="menu-toggle" id="menuToggle">▶</button>
         <nav class="nav-menu">
             <ul>
                 <li>
@@ -31,7 +301,9 @@
                 </li>
                 <li><a href="pages/estoque.html">Estoque</a></li>
                 <li id="menuUsuarios" style="display: none;"><a href="pages/gerenciar-usuarios.html">Gerenciar Usuários</a></li>
-                <li id="menuBackup" style="display: none;"><a href="pages/backup.html">🔒 Backup</a></li>
+                <li id="menuBackup" style="display: none;"><a href="pages/backup.html">Backup</a></li>
+                <li id="menuHistorico" style="display: none;"><a href="pages/historico.html">Histórico de Ações</a></li>
+                <li id="menuAdminDB" style="display: none;"><a href="pages/admin-db.html">🗄️ Admin DB</a></li>
                 <li>
                     <a href="#" onclick="toggleSubmenu(event)">Relatórios</a>
                     <ul class="submenu">
@@ -41,206 +313,163 @@
                     </ul>
                 </li>
                 <li><a href="pages/vendas.html">Vendas</a></li>
-                <li id="menuHistorico" style="display: none;"><a href="pages/historico.html">Histórico de Ações</a></li>
-                <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
+                <li><a href="pages/contas-pagar.html">Contas a Pagar</a></li>
+                <li><a href="#" onclick="logout()" style="color: #ff4500; margin-top: 1rem;">Sair</a></li>
             </ul>
         </nav>
     </div>
 
     <main class="main-content">
-        <h2 style="text-align: center;">Bem-vindo</h2>
-        
-        <div class="dashboard-grid">
-            <div class="dashboard-card" onclick="event.stopPropagation(); toggleSubmenuDashboard('cadastros')">
-                <div class="card-icon">📝</div>
-                <h3>Cadastros</h3>
-                <p>Peças, Fornecedores e Máquinas</p>
-                <div class="submenu-dashboard" id="submenu-cadastros" onclick="event.stopPropagation()">
-                    <a href="pages/cadastro-marca.html">Fornecedor</a>
-                    <a href="pages/cadastro-maquinas.html">Máquina de Cartão</a>
-                    <a href="pages/cadastro-pix.html">PIX</a>
-                    <a href="pages/cadastro-pecas.html">Peças</a>
+        <div class="dashboard-wrapper">
+            <div class="dashboard-header">
+                <h2>Olá, <span id="nomeUsuario">bem-vindo</span> 👋</h2>
+                <p id="dataAtual"></p>
+            </div>
+
+            <div class="divider-line"></div>
+
+            <div class="dashboard-grid">
+                <!-- Cadastros -->
+                <div class="dashboard-card" onclick="abrirModal('cadastros')">
+                    <span class="card-icon">📝</span>
+                    <h3>Cadastros</h3>
+                    <p>Peças, fornecedores e máquinas</p>
+                </div>
+
+                <!-- Estoque -->
+                <div class="dashboard-card" onclick="window.location.href='pages/estoque.html'">
+                    <span class="card-icon">📦</span>
+                    <h3>Estoque</h3>
+                    <p>Controle de inventário</p>
+                </div>
+
+                <!-- Vendas -->
+                <div class="dashboard-card" onclick="window.location.href='pages/vendas.html'">
+                    <span class="card-badge">Novo</span>
+                    <span class="card-icon">💰</span>
+                    <h3>Vendas</h3>
+                    <p>Registrar novas vendas</p>
+                </div>
+
+                <!-- Relatórios -->
+                <div class="dashboard-card" onclick="abrirModal('relatorios')">
+                    <span class="card-icon">📊</span>
+                    <h3>Relatórios</h3>
+                    <p>Financeiro, vendas e analítico</p>
+                </div>
+
+                <!-- Contas a Pagar -->
+                <div class="dashboard-card" onclick="window.location.href='pages/contas-pagar.html'">
+                    <span class="card-icon">💳</span>
+                    <h3>Contas a Pagar</h3>
+                    <p>Controle de pagamentos</p>
                 </div>
             </div>
-            
-            <div class="dashboard-card" onclick="window.location.href='pages/estoque.html'">
-                <div class="card-icon">📦</div>
-                <h3>Estoque</h3>
-                <p>Controle de Inventário</p>
-            </div>
-            
-            <div class="dashboard-card" onclick="window.location.href='pages/vendas.html'">
-                <div class="card-icon">💰</div>
-                <h3>Vendas</h3>
-                <p>Registrar Vendas</p>
-            </div>
-            
-            <div class="dashboard-card" onclick="event.stopPropagation(); toggleSubmenuDashboard('relatorios')">
-                <div class="card-icon">📊</div>
-                <h3>Relatórios</h3>
-                <p>Financeiro e Vendas</p>
-                <div class="submenu-dashboard" id="submenu-relatorios" onclick="event.stopPropagation()">
-                    <a href="pages/relatorio-financeiro.html">Financeiro</a>
-                    <a href="pages/relatorio-vendas.html">Vendas</a>
-                    <a href="pages/relatorio-analitico.html">Analítico</a>
-                </div>
+
+            <div class="bottom-bar">
+                <span><span class="status-dot"></span>Sistema online</span>
+                <span><strong>Move Up Fit</strong> &mdash; Sistema de Gest&atilde;o v1.1</span>
+                <span style="color: #333;">Desenv. <strong style="color: #555;">Jhonatann</strong></span>
             </div>
         </div>
     </main>
-    
-    <style>
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-            padding: 0 2rem;
-        }
-        
-        .dashboard-card {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-        
-        .dashboard-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(255,69,0,0.2);
-            border-color: #ff4500;
-        }
-        
-        .card-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        
-        .dashboard-card h3 {
-            color: #ff4500;
-            margin: 0 0 0.5rem 0;
-            font-size: 1.5rem;
-        }
-        
-        .dashboard-card p {
-            color: #666;
-            margin: 0;
-            font-size: 0.9rem;
-        }
-        
-        .submenu-dashboard {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            padding: 1rem;
-            margin-top: 0.5rem;
-            z-index: 100;
-        }
-        
-        .submenu-dashboard.show {
-            display: block;
-        }
-        
-        .submenu-dashboard a {
-            display: block;
-            padding: 0.8rem;
-            color: #333;
-            text-decoration: none;
-            border-radius: 4px;
-            margin: 0.2rem 0;
-            transition: background 0.2s;
-        }
-        
-        .submenu-dashboard a:hover {
-            background: #f8f9fa;
-            color: #ff4500;
-        }
-        
-        .dashboard-card {
-            position: relative;
-        }
-        
-        @media (max-width: 768px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-                padding: 0 1rem;
-            }
-        }
-    </style>
+
+    <!-- Modal de Seleção -->
+    <div class="modal-selecao" id="modalSelecao" onclick="fecharModal()">
+        <div class="modal-selecao-box" onclick="event.stopPropagation()">
+            <div class="modal-selecao-titulo" id="modalTitulo">Selecione uma opção</div>
+            <div class="modal-selecao-opcoes" id="modalOpcoes"></div>
+            <button class="modal-fechar" onclick="fecharModal()">Fechar</button>
+        </div>
+    </div>
 
     <script src="js/script.js"></script>
     <script src="js/firebase-config.js"></script>
     <script>
-        // Verificar autenticação e nível
+        // Data atual
+        const dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+        const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+        const agora = new Date();
+        document.getElementById('dataAtual').textContent =
+            `${dias[agora.getDay()]}, ${agora.getDate()} de ${meses[agora.getMonth()]} de ${agora.getFullYear()}`;
+
         firebase.auth().onAuthStateChanged(async function(user) {
             if (!user) {
                 window.location.href = 'login.html';
             } else {
-                // Verificar se é o email master e corrigir se necessário
-                if (user.email === 'jhonatann.andrade@gmail.com') {
+                console.log('Usuário logado:', user.email);
+                const isMasterEmail = user.email === 'jhonatann.andrade@gmail.com';
+                console.log('É master email?', isMasterEmail);
+
+                if (isMasterEmail) {
                     await FirebaseDatabase.criarUsuario(user.uid, user.email, 'master');
                 }
-                
-                // Obter nível do usuário
-                const nivel = await FirebaseDatabase.obterNivelUsuario(user.uid);
-                console.log('Nível do usuário:', nivel);
-                console.log('Email do usuário:', user.email);
-                
-                // Mostrar menus para master
+
+                let nivel = await FirebaseDatabase.obterNivelUsuario(user.uid);
+                console.log('Nível obtido:', nivel);
+
+                if (isMasterEmail) nivel = 'master';
+                console.log('Nível final:', nivel);
+
+                const nome = user.email.split('@')[0];
+                document.getElementById('nomeUsuario').textContent = nome;
+
                 if (nivel === 'master') {
-                    const menuUsuarios = document.getElementById('menuUsuarios');
-                    if (menuUsuarios) {
-                        menuUsuarios.style.display = 'block';
-                    }
-                    const menuHistorico = document.getElementById('menuHistorico');
-                    if (menuHistorico) {
-                        menuHistorico.style.display = 'block';
-                    }
-                    const menuBackup = document.getElementById('menuBackup');
-                    if (menuBackup) {
-                        menuBackup.style.display = 'block';
-                    }
+                    ['menuUsuarios','menuHistorico','menuBackup','menuAdminDB'].forEach(id => {
+                        const el = document.getElementById(id);
+                        console.log('Elemento', id, ':', el);
+                        if (el) el.style.display = 'block';
+                    });
                 }
-                
-                // Armazenar nível globalmente para uso futuro
+
                 window.userLevel = nivel;
             }
         });
-        
-        // Função de logout
+
         function logout() {
-            firebase.auth().signOut().then(() => {
-                window.location.href = 'login.html';
-            });
+            firebase.auth().signOut().then(() => window.location.href = 'login.html');
         }
-        
-        // Função para toggle dos submenus do dashboard
-        function toggleSubmenuDashboard(tipo) {
-            const submenu = document.getElementById(`submenu-${tipo}`);
-            const isVisible = submenu.classList.contains('show');
-            
-            // Fechar todos os submenus
-            document.querySelectorAll('.submenu-dashboard').forEach(s => s.classList.remove('show'));
-            
-            // Abrir o submenu clicado se não estava visível
-            if (!isVisible) {
-                submenu.classList.add('show');
+
+        const menus = {
+            cadastros: {
+                titulo: '📝 Cadastros',
+                opcoes: [
+                    { icone: '🏢', texto: 'Fornecedor', url: 'pages/cadastro-marca.html' },
+                    { icone: '💳', texto: 'Máquina de Cartão', url: 'pages/cadastro-maquinas.html' },
+                    { icone: '📱', texto: 'PIX', url: 'pages/cadastro-pix.html' },
+                    { icone: '👕', texto: 'Peças', url: 'pages/cadastro-pecas.html' },
+                ]
+            },
+            relatorios: {
+                titulo: '📊 Relatórios',
+                opcoes: [
+                    { icone: '💵', texto: 'Financeiro', url: 'pages/relatorio-financeiro.html' },
+                    { icone: '📈', texto: 'Vendas', url: 'pages/relatorio-vendas.html' },
+                    { icone: '🔍', texto: 'Analítico', url: 'pages/relatorio-analitico.html' },
+                    { icone: '👥', texto: 'Clientes', url: 'pages/relatorio-clientes.html' },
+                ]
             }
+        };
+
+        function abrirModal(tipo) {
+            const menu = menus[tipo];
+            if (!menu) return;
+            document.getElementById('modalTitulo').textContent = menu.titulo;
+            document.getElementById('modalOpcoes').innerHTML = menu.opcoes.map(op =>
+                `<a class="modal-selecao-opcao" href="${op.url}">
+                    <span class="icone">${op.icone}</span>
+                    <span>${op.texto}</span>
+                </a>`
+            ).join('');
+            document.getElementById('modalSelecao').classList.add('show');
         }
-        
-        // Fechar submenus ao clicar fora
-        document.addEventListener('click', function(event) {
-            if (!event.target.closest('.dashboard-card')) {
-                document.querySelectorAll('.submenu-dashboard').forEach(s => s.classList.remove('show'));
-            }
+
+        function fecharModal() {
+            document.getElementById('modalSelecao').classList.remove('show');
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') fecharModal();
         });
     </script>
 </body>

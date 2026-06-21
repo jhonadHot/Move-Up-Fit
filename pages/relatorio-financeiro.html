@@ -11,10 +11,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .filtros {
-            background: white;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin: 0 auto 2rem auto;
             width: 90%;
             max-width: 1200px;
@@ -31,15 +31,15 @@
             margin-bottom: 2rem;
         }
         .card {
-            background: white;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             text-align: center;
         }
         .card h3 {
             margin: 0 0 0.5rem 0;
-            color: #666;
+            color: #888;
             font-size: 0.9rem;
             text-transform: uppercase;
         }
@@ -55,63 +55,66 @@
             margin-bottom: 2rem;
         }
         .grafico-container {
-            background: white;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .grafico-container h3 {
             margin: 0 0 1rem 0;
             text-align: center;
-            color: #333;
+            color: #f0f0f0;
         }
         .detalhes-table {
             width: 90%;
             max-width: 1200px;
             margin: 0 auto;
             border-collapse: collapse;
-            background: white;
+            background: rgba(255,255,255,0.04);
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.08);
         }
         .detalhes-table th,
         .detalhes-table td {
             padding: 0.75rem;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            color: #f0f0f0;
         }
         .detalhes-table th {
-            background-color: #f8f9fa;
+            background: rgba(255,69,0,0.08);
+            color: #ff4500 !important;
             font-weight: bold;
         }
-        .detalhes-table tr:hover {
-            background-color: #f5f5f5;
+        .detalhes-table tr:hover td {
+            background: rgba(255,255,255,0.05);
         }
         .crediario-pendente {
-            background: white;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin: 0 auto 2rem auto;
             width: 90%;
             max-width: 1200px;
+            border-left: 4px solid #ff4500;
         }
+        .crediario-pendente h3 { color: #ff4500; margin-top: 0; }
         .pendencia-item {
-            border: 1px solid #ddd;
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1rem;
             margin: 0.5rem 0;
             border-radius: 4px;
             cursor: pointer;
+            color: #f0f0f0;
         }
-        .pendencia-item:hover {
-            background-color: #f5f5f5;
-        }
+        .pendencia-item:hover { background: rgba(255,69,0,0.06); }
         .parcelas-detalhes {
             display: none;
             margin-top: 1rem;
             padding-top: 1rem;
-            border-top: 1px solid #eee;
+            border-top: 1px solid rgba(255,255,255,0.08);
         }
         .parcela-item {
             display: flex;
@@ -119,17 +122,12 @@
             align-items: center;
             padding: 0.5rem;
             margin: 0.3rem 0;
-            border: 1px solid #ddd;
+            border: 1px solid rgba(255,255,255,0.08);
             border-radius: 4px;
+            color: #f0f0f0;
         }
-        .parcela-paga {
-            background-color: #d4edda;
-            border-color: #c3e6cb;
-        }
-        .parcela-pendente {
-            background-color: #fff3cd;
-            border-color: #ffeaa7;
-        }
+        .parcela-paga { background: rgba(40,167,69,0.15); border-color: rgba(40,167,69,0.3); }
+        .parcela-pendente { background: rgba(255,193,7,0.1); border-color: rgba(255,193,7,0.3); }
         .btn-parcela {
             padding: 0.3rem 0.6rem;
             font-size: 0.8rem;
@@ -179,8 +177,11 @@
         </div>
     </header>
 
+    <button class="menu-toggle" id="menuToggle">&#9654;</button>
+
+    <button onclick="history.back()" style="position:fixed;top:calc(var(--header-height) + 12px);right:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#888;padding:0.4rem 0.9rem;border-radius:8px;cursor:pointer;font-size:0.82rem;font-family:Inter,sans-serif;z-index:1001;transition:all 0.2s;" class="btn-voltar" onmouseover="this.style.color='#f0f0f0'" onmouseout="this.style.color='#888'">&#8592; Voltar</button>
+
     <div class="sidebar" id="sidebar">
-        <button class="menu-toggle" id="menuToggle">▶</button>
         <nav class="nav-menu">
             <ul>
                 <li><a href="../index.html">Início</a></li>
@@ -201,9 +202,11 @@
                         <li><a href="relatorio-financeiro.html">Financeiro</a></li>
                         <li><a href="relatorio-vendas.html">Vendas</a></li>
                         <li><a href="relatorio-analitico.html">Analítico</a></li>
+                        <li><a href="relatorio-clientes.html">Clientes</a></li>
                     </ul>
                 </li>
                 <li><a href="vendas.html">Vendas</a></li>
+                <li><a href="contas-pagar.html">Contas a Pagar</a></li>
                 <li id="menuHistorico" style="display: none;"><a href="historico.html">Histórico de Ações</a></li>
                 <li><a href="#" onclick="logout()" style="color: #ff6b6b;">Sair</a></li>
             </ul>
@@ -290,15 +293,85 @@
         </div>
 
         <div class="crediario-pendente">
-            <h3>Crediário - Controle de Parcelas</h3>
+            <h3>Crediário - Controle de Parcelas <small style="font-size: 0.7em; color: #666; font-weight: normal;">(Todos os pendentes)</small></h3>
             <div id="listaCrediario">
                 <p style="text-align: center; color: #666;">Nenhum crediário pendente</p>
             </div>
         </div>
         
+        <!-- Modal para resumo de vendas -->
+        <div id="modalResumoVendas" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0f0f18; border: 1px solid rgba(255,255,255,0.1); padding: 2rem; border-radius: 12px; width: 80%; max-width: 800px; max-height: 80%; overflow-y: auto; color: #f0f0f0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>Resumo de Vendas por Cliente</h3>
+                    <button onclick="fecharModalResumoVendas()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                </div>
+                <div id="conteudoResumoVendas"></div>
+                <div style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid #ff4500;">
+                    <h4 id="totalGeralResumo" style="color: #ff4500;">Total Geral: R$ 0,00</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para dar baixa -->
+        <div id="modalDarBaixa" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1001;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0f0f18; border: 1px solid rgba(255,255,255,0.1); padding: 2rem; border-radius: 12px; width: 400px; color: #f0f0f0;">
+                <h3>Dar Baixa no Pagamento</h3>
+                <div class="form-group">
+                    <label>Cliente:</label>
+                    <p id="clienteBaixa" style="font-weight: bold;"></p>
+                </div>
+                <div class="form-group">
+                    <label>Valor Pendente:</label>
+                    <p id="valorPendenteBaixa" style="font-weight: bold; color: #dc3545;"></p>
+                </div>
+                <div class="form-group">
+                    <label for="valorPagoBaixa">Valor Pago (R$):</label>
+                    <input type="number" id="valorPagoBaixa" step="0.01" min="0.01" placeholder="0,00" style="width: 100%;">
+                </div>
+                <div class="form-group">
+                    <label for="formaPagamentoBaixa">Forma de Pagamento:</label>
+                    <select id="formaPagamentoBaixa" required style="width: 100%;">
+                        <option value="">Selecione...</option>
+                        <option value="dinheiro">Dinheiro</option>
+                        <option value="pix">PIX</option>
+                        <option value="debito">Cartão Débito</option>
+                    </select>
+                </div>
+                <div style="text-align: right; margin-top: 1rem;">
+                    <button class="btn btn-secondary" onclick="fecharModalDarBaixa()">Cancelar</button>
+                    <button class="btn" onclick="confirmarBaixa()" style="margin-left: 0.5rem; background-color: #28a745;">Confirmar Baixa</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para editar valor devedor -->
+        <div id="modalEditarDevedor" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1001;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0f0f18; border: 1px solid rgba(255,255,255,0.1); padding: 2rem; border-radius: 12px; width: 400px; color: #f0f0f0;">
+                <h3>Editar Valor Devedor</h3>
+                <div class="form-group">
+                    <label>Cliente:</label>
+                    <p id="clienteEditar" style="font-weight: bold;"></p>
+                </div>
+                <div class="form-group">
+                    <label>Valor Atual:</label>
+                    <p id="valorAtualEditar" style="font-weight: bold; color: #dc3545;"></p>
+                </div>
+                <div class="form-group">
+                    <label for="novoValorDevedor">Novo Valor Devedor (R$):</label>
+                    <input type="number" id="novoValorDevedor" step="0.01" min="0" placeholder="0,00" style="width: 100%;">
+                    <small style="color: #666;">Digite o valor a ser removido dos pagamentos (valor que voltará a dever)</small>
+                </div>
+                <div style="text-align: right; margin-top: 1rem;">
+                    <button class="btn btn-secondary" onclick="fecharModalEditarDevedor()">Cancelar</button>
+                    <button class="btn" onclick="confirmarEdicaoDevedor()" style="margin-left: 0.5rem; background-color: #ff4500;">Salvar Alteração</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Modal para pagamento de parcela -->
-        <div id="modalPagamento" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 8px; width: 400px;">
+        <div id="modalPagamento" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0f0f18; border: 1px solid rgba(255,255,255,0.1); padding: 2rem; border-radius: 12px; width: 400px; color: #f0f0f0;">
                 <h3>Registrar Pagamento</h3>
                 <div class="form-group">
                     <label>Cliente:</label>
@@ -321,6 +394,9 @@
                 <div class="form-group" id="valorDiferente" style="display: none;">
                     <label for="valorPagamento">Valor a pagar (R$):</label>
                     <input type="number" id="valorPagamento" step="0.01" min="0.01" placeholder="0,00">
+                    <small style="color: #666; display: block; margin-top: 0.3rem;">
+                        💡 O valor será aplicado primeiro nas parcelas vencidas (mais antigas)
+                    </small>
                 </div>
                 <div class="form-group">
                     <label for="formaPagamentoParcela">Forma de Pagamento:</label>
@@ -343,7 +419,16 @@
                     </div>
                 </div>
                 <div style="text-align: right; margin-top: 1rem;">
-                    <button class="btn btn-secondary" onclick="fecharModalPagamento()">Cancelar</button>
+                    <div class="form-group" style="margin-bottom:1rem;">
+                    <label for="descontoParcelaInput" style="display:flex;align-items:center;gap:0.5rem;">
+                        <input type="checkbox" id="aplicarDesconto" onchange="toggleDescontoParcela()"> Aplicar Desconto
+                    </label>
+                    <div id="descontoParcelaDiv" style="display:none;margin-top:0.5rem;">
+                        <input type="number" id="descontoParcelaInput" step="0.01" min="0" placeholder="Valor do desconto (R$)" style="width:100%;">
+                        <small style="color:#888;">O desconto ser&#225; subtra&#237;do do valor a pagar</small>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="fecharModalPagamento()">Cancelar</button>
                     <button class="btn" onclick="confirmarPagamento()" style="margin-left: 0.5rem;">Confirmar Pagamento</button>
                 </div>
             </div>
@@ -415,10 +500,12 @@
                     return;
                 }
 
-                // Carregar vendas, pagamentos de parcelas, máquinas e estoque
+                // Forçar recarregamento dos dados do Firebase
+                console.log('Recarregando dados do Firebase...');
                 todasVendas = await FirebaseDatabase.obterVendas();
                 pagamentosParcelas = await FirebaseDatabase.obterPagamentosParcelas();
                 maquinasDisponiveis = await FirebaseDatabase.obterMaquinas();
+                console.log('Dados recarregados:', todasVendas.length, 'vendas,', pagamentosParcelas.length, 'pagamentos');
                 
                 // Calcular valor do estoque
                 await calcularValorEstoque();
@@ -435,8 +522,8 @@
                 // Mostrar detalhes
                 mostrarDetalhes(vendasFiltradas);
                 
-                // Mostrar crediário pendente
-                mostrarCrediarioPendente(vendasFiltradas);
+                // Mostrar crediário pendente (sempre todos, independente do filtro)
+                await mostrarCrediarioPendente(vendasFiltradas);
                 
             } catch (error) {
                 console.error('Erro ao gerar relatório:', error);
@@ -900,51 +987,228 @@
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhuma venda encontrada</td></tr>';
                 return;
             }
-            
-            tbody.innerHTML = vendas.map(venda => {
-                let dataVenda = 'N/A';
-                if (venda.dataVenda) {
-                    if (venda.dataVenda.toDate) {
-                        dataVenda = venda.dataVenda.toDate().toLocaleDateString('pt-BR');
-                    } else {
-                        dataVenda = new Date(venda.dataVenda).toLocaleDateString('pt-BR');
-                    }
+
+            // Ordenar por status (pendente primeiro) e depois por nome
+            vendas.sort((a, b) => {
+                // Calcular status de A
+                let statusA = 'PAGO';
+                if (a.pagamento && a.pagamento.formaPagamento === 'crediario') {
+                    const pagamentosA = pagamentosParcelas.filter(p => p.vendaId === a.id);
+                    const totalPagoA = pagamentosA.reduce((sum, p) => sum + p.valor, 0);
+                    const saldoA = (a.saldoRestante || a.total) - totalPagoA;
+                    statusA = saldoA <= 0.01 ? 'PAGO' : 'PENDENTE';
                 }
                 
-                const formaPagamento = getFormaPagamentoTexto(venda.pagamento?.formaPagamento);
-                const status = venda.pagamento?.formaPagamento === 'crediario' ? 'Pendente' : 'Pago';
+                // Calcular status de B
+                let statusB = 'PAGO';
+                if (b.pagamento && b.pagamento.formaPagamento === 'crediario') {
+                    const pagamentosB = pagamentosParcelas.filter(p => p.vendaId === b.id);
+                    const totalPagoB = pagamentosB.reduce((sum, p) => sum + p.valor, 0);
+                    const saldoB = (b.saldoRestante || b.total) - totalPagoB;
+                    statusB = saldoB <= 0.01 ? 'PAGO' : 'PENDENTE';
+                }
                 
+                // Primeiro por status (PENDENTE primeiro)
+                if (statusA !== statusB) {
+                    return statusA === 'PENDENTE' ? -1 : 1;
+                }
+                
+                // Depois por nome
+                const nomeA = (a.cliente && a.cliente.nome) ? a.cliente.nome.toLowerCase() : '';
+                const nomeB = (b.cliente && b.cliente.nome) ? b.cliente.nome.toLowerCase() : '';
+                return nomeA.localeCompare(nomeB);
+            });
+            
+            tbody.innerHTML = vendas.map(venda => {
+                let dataVenda, dataFormatada;
+                
+                try {
+                    if (venda.dataVenda && venda.dataVenda.toDate) {
+                        dataVenda = venda.dataVenda.toDate();
+                    } else if (venda.dataVenda) {
+                        dataVenda = new Date(venda.dataVenda);
+                    } else {
+                        dataVenda = new Date();
+                    }
+                    dataFormatada = dataVenda.toLocaleDateString('pt-BR');
+                } catch (error) {
+                    dataFormatada = 'Data inválida';
+                }
+
+                // Debug: verificar dados da venda
+                console.log('Venda:', venda.cliente?.nome, {
+                    total: venda.total,
+                    saldoRestante: venda.saldoRestante,
+                    formaPagamento: venda.pagamento?.formaPagamento
+                });
+                
+                // Calcular status baseado no valor devedor e vencimento
+                let status = 'PAGO';
+                let corStatus = '#28a745'; // Verde para PAGO
+                const saldoAtual = venda.saldoRestante || venda.total;
+                const totalOriginal = venda.total || 0;
+                const hoje = new Date();
+                
+                if (venda.pagamento && venda.pagamento.formaPagamento === 'crediario') {
+                    const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                    const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+                    const valorDevedorReal = saldoAtual - totalPago;
+                    
+                    if (valorDevedorReal > 0.01) {
+                        // Verificar se tem parcela vencida
+                        const dataPromessa = venda.dataPromessa;
+                        const parcelas = venda.pagamento?.parcelas || 1;
+                        
+                        if (dataPromessa) {
+                            const dataBase = new Date(dataPromessa + 'T00:00:00');
+                            let temParcelaVencida = false;
+                            
+                            for (let i = 0; i < parcelas; i++) {
+                                const dataParcela = new Date(dataBase);
+                                dataParcela.setMonth(dataParcela.getMonth() + i);
+                                
+                                // Verificar se parcela foi paga
+                                const pagamentosParcela = pagamentosVenda.filter(p => p.numeroParcela === (i + 1));
+                                const valorPagoParcela = pagamentosParcela.reduce((sum, p) => sum + p.valor, 0);
+                                const valorParcela = saldoAtual / parcelas;
+                                
+                                // Só considera vencida se a data passou E a parcela não foi paga completamente
+                                if (dataParcela < hoje && valorPagoParcela < (valorParcela - 0.01)) {
+                                    temParcelaVencida = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (temParcelaVencida) {
+                                status = 'PENDENTE';
+                                corStatus = '#dc3545'; // Vermelho para vencido
+                            } else {
+                                status = 'EM DIA';
+                                corStatus = '#ffc107'; // Amarelo para em dia
+                            }
+                        } else {
+                            status = 'PENDENTE';
+                            corStatus = '#dc3545';
+                        }
+                    }
+                    console.log('Crediário - Cliente:', venda.cliente?.nome, 'Status:', status, 'Cor:', corStatus);
+                } else {
+                    // Para outras formas, se saldoRestante > total original = PENDENTE
+                    if (saldoAtual > totalOriginal) {
+                        status = 'PENDENTE';
+                        corStatus = '#dc3545';
+                    }
+                    console.log('Outros - Cliente:', venda.cliente?.nome, 'Status:', status);
+                }
+
+                // Calcular valor devedor atual (pode ser negativo se pagou a mais)
+                let valorDevedor = 0;
+                if (venda.pagamento && venda.pagamento.formaPagamento === 'crediario') {
+                    const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                    const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+                    valorDevedor = saldoAtual - totalPago; // Pode ser negativo
+                } else {
+                    valorDevedor = saldoAtual - totalOriginal; // Pode ser negativo
+                }
+                
+                // Valor a mostrar na tabela: sempre mostra o valor absoluto do devedor se > 0, senão mostra o total
+                const valorParaMostrar = valorDevedor > 0 ? valorDevedor : totalOriginal;
+                const valorTotalVenda = venda.total || 0;
+                
+                console.log('Cliente:', venda.cliente?.nome, 'ValorDevedor:', valorDevedor, 'ValorParaMostrar:', valorParaMostrar);
+
                 return `
                     <tr>
-                        <td>${dataVenda}</td>
-                        <td>${venda.cliente?.nome || 'N/A'}</td>
-                        <td>${formaPagamento}</td>
-                        <td>R$ ${(venda.total || 0).toFixed(2)}</td>
-                        <td><span class="${status === 'Pendente' ? 'valor-negativo' : 'valor-positivo'}">${status}</span></td>
+                        <td>${dataFormatada}</td>
+                        <td>${venda.cliente ? venda.cliente.nome : 'Não informado'}</td>
+                        <td>${venda.pagamento ? getFormaPagamentoTexto(venda.pagamento.formaPagamento) : 'Não informado'}</td>
+                        <td>R$ ${valorParaMostrar.toFixed(2)}</td>
+                        <td><span style="color: ${corStatus}">${status}</span></td>
                     </tr>
                 `;
             }).join('');
         }
 
-        function mostrarCrediarioPendente(vendas) {
+        async function mostrarCrediarioPendente(vendas) {
             const container = document.getElementById('listaCrediario');
-            const crediarios = vendas.filter(venda => venda.pagamento?.formaPagamento === 'crediario');
             
+            // Buscar TODAS as vendas de crediário, ignorando filtro de data
+            const todasVendasCrediario = todasVendas.filter(venda => {
+                if (venda.pagamento?.formaPagamento !== 'crediario') return false;
+                
+                // Verificar se ainda tem valor pendente
+                const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+                const saldoRestante = (venda.saldoRestante || venda.total) - totalPago;
+                
+                return saldoRestante > 0.01; // Só mostra se ainda deve
+            }).sort((a, b) => {
+                const nomeA = (a.cliente && a.cliente.nome) ? a.cliente.nome.toLowerCase() : '';
+                const nomeB = (b.cliente && b.cliente.nome) ? b.cliente.nome.toLowerCase() : '';
+                return nomeA.localeCompare(nomeB);
+            });
+            
+            const crediarios = todasVendasCrediario;
+
+            // Atualizar título com contador
+            const tituloCrediario = document.querySelector('.crediario-pendente h3');
             if (crediarios.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #666;">Nenhum crediário pendente</p>';
+                container.innerHTML = '<p style="text-align: center; color: #28a745; font-weight: bold;">✅ Nenhum crediário pendente - Tudo pago!</p>';
+                tituloCrediario.innerHTML = 'Crediário - Controle de Parcelas <small style="font-size: 0.7em; color: #28a745; font-weight: normal;">(0 pendentes)</small>';
                 return;
             }
+            
+            // Calcular total pendente
+            let totalGeralPendente = 0;
+            crediarios.forEach(venda => {
+                const saldoRestante = venda.saldoRestante || venda.total || 0;
+                const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+                totalGeralPendente += (saldoRestante - totalPago);
+            });
+            
+            tituloCrediario.innerHTML = `Crediário - Controle de Parcelas <small style="font-size: 0.7em; color: #dc3545; font-weight: normal;">(${crediarios.length} cliente${crediarios.length > 1 ? 's' : ''} - Total: R$ ${totalGeralPendente.toFixed(2)})</small>`;
             
             container.innerHTML = crediarios.map((venda, index) => {
                 const saldoRestante = venda.saldoRestante || venda.total || 0;
                 const parcelas = venda.pagamento?.parcelas || 1;
                 const valorParcela = saldoRestante / parcelas;
                 const dataPromessa = venda.dataPromessa;
+                const hoje = new Date();
                 
                 // Calcular total já pago
                 const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
                 const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
                 const saldoPendente = saldoRestante - totalPago;
+                
+                // Verificar se tem parcela vencida
+                let temParcelaVencida = false;
+                if (dataPromessa) {
+                    const dataBase = new Date(dataPromessa + 'T00:00:00');
+                    for (let i = 0; i < parcelas; i++) {
+                        const dataParcela = new Date(dataBase);
+                        dataParcela.setMonth(dataParcela.getMonth() + i);
+                        
+                        const pagamentosParcela = pagamentosVenda.filter(p => p.numeroParcela === (i + 1));
+                        const valorPagoParcela = pagamentosParcela.reduce((sum, p) => sum + p.valor, 0);
+                        
+                        // Só considera vencida se a data passou E a parcela não foi paga completamente
+                        if (dataParcela < hoje && valorPagoParcela < (valorParcela - 0.01)) {
+                            temParcelaVencida = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Definir status e cor
+                let statusTexto, corStatus;
+                if (temParcelaVencida) {
+                    statusTexto = 'PENDENTE';
+                    corStatus = '#dc3545'; // Vermelho
+                } else {
+                    statusTexto = 'EM DIA';
+                    corStatus = '#ffc107'; // Amarelo
+                }
                 
                 let parcelasHtml = '';
                 if (dataPromessa) {
@@ -954,17 +1218,16 @@
                         dataParcela.setMonth(dataParcela.getMonth() + i);
                         const dataFormatada = dataParcela.toLocaleDateString('pt-BR');
                         
-                        // Verificar se parcela foi paga (totalmente)
                         const pagamentosParcela = pagamentosParcelas.filter(p => 
                             p.vendaId === venda.id && p.numeroParcela === (i + 1)
                         );
                         const valorPagoParcela = pagamentosParcela.reduce((sum, p) => sum + p.valor, 0);
-                        const paga = valorPagoParcela >= valorParcela;
-                        const valorRestanteParcela = valorParcela - valorPagoParcela;
+                        const paga = valorPagoParcela >= (valorParcela - 0.01);
+                        const valorRestanteParcela = Math.max(0, valorParcela - valorPagoParcela);
                         
                         const statusClass = paga ? 'parcela-paga' : 'parcela-pendente';
-                        const statusTexto = paga ? 'Paga' : (valorPagoParcela > 0 ? `Parcial: R$ ${valorRestanteParcela.toFixed(2)}` : 'Pendente');
-                        const botaoTexto = paga ? 'Paga' : 'Marcar como Paga';
+                        const statusTexto = paga ? 'Paga' : (valorPagoParcela > 0 ? `Parcial: Falta R$ ${valorRestanteParcela.toFixed(2)}` : 'Pendente');
+                        const botaoTexto = valorPagoParcela > 0 && !paga ? 'Completar Pagamento' : 'Marcar como Paga';
                         const botaoWhatsApp = !paga && venda.cliente?.telefone ? 
                             `<button class="btn-whatsapp" onclick="enviarWhatsApp('${venda.cliente.telefone}', '${venda.cliente.nome}', ${valorRestanteParcela.toFixed(2)}, '${dataFormatada}')" title="Enviar lembrete por WhatsApp">
                                 📱 WhatsApp
@@ -975,15 +1238,23 @@
                                 <div>
                                     <strong>Parcela ${i + 1}/${parcelas}</strong><br>
                                     <small>Vencimento: ${dataFormatada}</small>
+                                    ${valorPagoParcela > 0 && !paga ? `<br><small style="color: #28a745;">Pago: R$ ${valorPagoParcela.toFixed(2)}</small>` : ''}
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                                     <span>R$ ${valorParcela.toFixed(2)}</span>
                                     <span style="font-size: 0.8rem; color: ${paga ? '#28a745' : '#856404'};">${statusTexto}</span>
-                                    ${!paga ? `<button class="btn-parcela" onclick="abrirModalPagamento('${venda.id}', ${i + 1}, '${venda.cliente?.nome}', ${valorParcela.toFixed(2)}, '${dataFormatada}')">${botaoTexto}</button>` : ''}
+                                    ${!paga ? `<button class="btn-parcela" onclick="abrirModalPagamento('${venda.id}', ${i + 1}, '${venda.cliente?.nome}', ${valorRestanteParcela.toFixed(2)}, '${dataFormatada}')">${botaoTexto}</button>` : ''}
+                                    ${paga ? `<button class="btn-parcela" onclick="reverterParcela('${venda.id}', ${i + 1}, '${venda.cliente?.nome}', ${valorPagoParcela.toFixed(2)})" style="background-color: #dc3545;">Reverter</button>` : ''}
                                     ${botaoWhatsApp}
                                 </div>
                             </div>
                         `;
+                    }
+                } else {
+                    const _tp = pagamentosParcelas.filter(p => p.vendaId === venda.id).reduce((s,p) => s+p.valor, 0);
+                    const _vr = Math.max(0, saldoRestante - _tp);
+                    if (_vr > 0.01) {
+                        parcelasHtml = `<div class="parcela-item parcela-pendente"><div><strong>Saldo Pendente</strong><br><small>Vencimento nao informado</small></div><div style="display:flex;gap:0.5rem;align-items:center;"><span>R$ ${_vr.toFixed(2)}</span><button class="btn-parcela" onclick="abrirModalPagamento('${venda.id}', 1, '${venda.cliente?.nome}', ${_vr.toFixed(2)}, 'sem data')">Marcar como Paga</button></div></div>`;
                     }
                 }
                 
@@ -992,11 +1263,13 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                             <div>
                                 <strong>${venda.cliente?.nome || 'Cliente não informado'}</strong><br>
-                                <small>${parcelas}x parcelas de R$ ${valorParcela.toFixed(2)} | Pago: R$ ${totalPago.toFixed(2)}</small>
+                                <small>${parcelas}x parcelas de R$ ${valorParcela.toFixed(2)} | Pago: R$ ${totalPago.toFixed(2)}</small><br>
+                                <span style="color: ${corStatus}; font-weight: bold; font-size: 0.9rem;">${statusTexto}</span>
                             </div>
                             <div>
                                 <span class="valor-negativo">Pendente: R$ ${saldoPendente.toFixed(2)}</span>
-                                <span style="margin-left: 1rem; font-size: 0.8rem;">▼</span>
+                                <span style="margin-left: 1rem; font-size: 0.8rem;">&#9660;</span>
+                                <button class="btn-parcela" onclick="event.stopPropagation(); abrirModalEstornoCrediario('${venda.id}', '${venda.cliente?.nome}')" style="margin-left:0.75rem;background:#ff8c00;font-size:0.78rem;padding:0.25rem 0.6rem;">&#8617; Estorno</button>
                             </div>
                         </div>
                         <div class="parcelas-detalhes" id="parcelas-${index}">
@@ -1137,7 +1410,15 @@
         function abrirModalPagamento(vendaId, numeroParcela, nomeCliente, valorParcela, dataVencimento) {
             parcelaAtual = { vendaId, numeroParcela, valorParcela };
             document.getElementById('clientePagamento').textContent = nomeCliente;
-            document.getElementById('parcelaPagamento').textContent = `${numeroParcela}ª parcela - R$ ${valorParcela} (Venc: ${dataVencimento})`;
+            
+            // Verificar se está vencida
+            const hoje = new Date();
+            const partesData = dataVencimento.split('/');
+            const dataVenc = new Date(partesData[2], partesData[1] - 1, partesData[0]);
+            const vencida = dataVenc < hoje;
+            const avisoVencida = vencida ? ' <span style="color: #dc3545; font-weight: bold;">⚠️ VENCIDA</span>' : '';
+            
+            document.getElementById('parcelaPagamento').innerHTML = `${numeroParcela}ª parcela - R$ ${valorParcela} (Venc: ${dataVencimento})${avisoVencida}`;
             document.getElementById('formaPagamentoParcela').value = '';
             document.getElementById('opcoesMaquina').style.display = 'none';
             document.querySelector('input[name="tipoPagamento"][value="parcela"]').checked = true;
@@ -1146,6 +1427,12 @@
             document.getElementById('modalPagamento').style.display = 'block';
         }
         
+        function toggleDescontoParcela() {
+            const cb = document.getElementById('aplicarDesconto');
+            document.getElementById('descontoParcelaDiv').style.display = cb.checked ? 'block' : 'none';
+            if (!cb.checked) document.getElementById('descontoParcelaInput').value = '';
+        }
+
         function alterarTipoPagamento() {
             const tipoPagamento = document.querySelector('input[name="tipoPagamento"]:checked').value;
             const valorDiferente = document.getElementById('valorDiferente');
@@ -1160,6 +1447,9 @@
         
         function fecharModalPagamento() {
             document.getElementById('modalPagamento').style.display = 'none';
+            document.getElementById('aplicarDesconto').checked = false;
+            document.getElementById('descontoParcelaDiv').style.display = 'none';
+            document.getElementById('descontoParcelaInput').value = '';
             parcelaAtual = null;
         }
         
@@ -1176,11 +1466,24 @@
             if (tipoPagamento === 'valor') {
                 valorPagar = parseFloat(document.getElementById('valorPagamento').value);
                 if (!valorPagar || valorPagar <= 0) {
-                    alert('Digite um valor válido!');
+                    alert('Digite um valor v\u00e1lido!');
                     return;
                 }
             } else {
                 valorPagar = parcelaAtual.valorParcela;
+            }
+
+            // Aplicar desconto se marcado
+            const aplicarDesc = document.getElementById('aplicarDesconto').checked;
+            if (aplicarDesc) {
+                const desconto = parseFloat(document.getElementById('descontoParcelaInput').value) || 0;
+                if (desconto > 0) {
+                    if (desconto >= valorPagar) {
+                        alert('O desconto n\u00e3o pode ser maior ou igual ao valor a pagar!');
+                        return;
+                    }
+                    valorPagar = valorPagar - desconto;
+                }
             }
             
             let maquina = null;
@@ -1204,20 +1507,74 @@
                 let valorRestante = valorPagar;
                 const novosPagamentos = [];
                 
-                for (let i = 1; i <= parcelas && valorRestante > 0; i++) {
-                    const jaPaga = pagamentosExistentes.some(p => p.numeroParcela === i);
-                    if (!jaPaga) {
-                        const valorParaParcela = Math.min(valorRestante, valorParcela);
-                        novosPagamentos.push({
-                            vendaId: parcelaAtual.vendaId,
-                            numeroParcela: i,
-                            valor: valorParaParcela,
-                            formaPagamento: formaPagamento,
-                            maquina: maquina,
-                            valorOriginalParcela: valorParcela
-                        });
-                        valorRestante -= valorParaParcela;
+                // Criar lista de parcelas com seus status
+                const dataPromessa = venda.dataPromessa;
+                const hoje = new Date();
+                const parcelasComStatus = [];
+                
+                if (dataPromessa) {
+                    const dataBase = new Date(dataPromessa + 'T00:00:00');
+                    
+                    for (let i = 1; i <= parcelas; i++) {
+                        const dataParcela = new Date(dataBase);
+                        dataParcela.setMonth(dataParcela.getMonth() + (i - 1));
+                        
+                        const pagamentosParcela = pagamentosExistentes.filter(p => p.numeroParcela === i);
+                        const valorJaPago = pagamentosParcela.reduce((sum, p) => sum + p.valor, 0);
+                        const valorRestanteParcela = valorParcela - valorJaPago;
+                        
+                        if (valorRestanteParcela > 0.01) {
+                            parcelasComStatus.push({
+                                numero: i,
+                                dataVencimento: dataParcela,
+                                valorRestante: valorRestanteParcela,
+                                vencida: dataParcela < hoje
+                            });
+                        }
                     }
+                    
+                    // Ordenar: vencidas primeiro (da mais antiga para mais recente), depois as futuras
+                    parcelasComStatus.sort((a, b) => {
+                        if (a.vencida && !b.vencida) return -1;
+                        if (!a.vencida && b.vencida) return 1;
+                        return a.dataVencimento - b.dataVencimento;
+                    });
+                } else {
+                    // Se não tem data de promessa, processar em ordem
+                    for (let i = 1; i <= parcelas; i++) {
+                        const pagamentosParcela = pagamentosExistentes.filter(p => p.numeroParcela === i);
+                        const valorJaPago = pagamentosParcela.reduce((sum, p) => sum + p.valor, 0);
+                        const valorRestanteParcela = valorParcela - valorJaPago;
+                        
+                        if (valorRestanteParcela > 0.01) {
+                            parcelasComStatus.push({
+                                numero: i,
+                                valorRestante: valorRestanteParcela,
+                                vencida: false
+                            });
+                        }
+                    }
+                }
+                
+                // Distribuir pagamento pelas parcelas (priorizando vencidas)
+                for (const parcela of parcelasComStatus) {
+                    if (valorRestante <= 0.01) break;
+                    
+                    const valorParaParcela = Math.min(valorRestante, parcela.valorRestante);
+                    novosPagamentos.push({
+                        vendaId: parcelaAtual.vendaId,
+                        numeroParcela: parcela.numero,
+                        valor: valorParaParcela,
+                        formaPagamento: formaPagamento,
+                        maquina: maquina,
+                        valorOriginalParcela: valorParcela
+                    });
+                    valorRestante -= valorParaParcela;
+                }
+                
+                if (novosPagamentos.length === 0) {
+                    alert('Não há parcelas pendentes para pagar!');
+                    return;
                 }
                 
                 // Salvar todos os pagamentos
@@ -1225,7 +1582,15 @@
                     await FirebaseDatabase.registrarPagamentoParcela(pagamento);
                 }
                 
-                alert(`Pagamento de R$ ${valorPagar.toFixed(2)} registrado com sucesso!\n${novosPagamentos.length} parcela(s) afetada(s).`);
+                // Criar mensagem detalhada
+                let mensagem = `Pagamento de R$ ${valorPagar.toFixed(2)} registrado com sucesso!\n\n`;
+                mensagem += `Parcelas afetadas:\n`;
+                novosPagamentos.forEach(p => {
+                    const status = p.valor >= (p.valorOriginalParcela - 0.01) ? 'PAGA' : 'PARCIAL';
+                    mensagem += `- Parcela ${p.numeroParcela}: R$ ${p.valor.toFixed(2)} [${status}]\n`;
+                });
+                
+                alert(mensagem);
                 fecharModalPagamento();
                 gerarRelatorio(); // Recarregar relatório
             } catch (error) {
@@ -1333,7 +1698,9 @@ Move Up Fit`;
             document.getElementById('quantidadeEstoque').textContent = '0';
             
             document.getElementById('tabelaDetalhes').innerHTML = '<tr><td colspan="5" style="text-align: center;">Selecione um período</td></tr>';
-            document.getElementById('listaCrediario').innerHTML = '<p style="text-align: center; color: #666;">Selecione um período</p>';
+            
+            // Crediário sempre mostra todos os pendentes
+            mostrarCrediarioPendente([]);
             
             // Destruir gráficos
             if (graficoFormas) {
@@ -1345,6 +1712,608 @@ Move Up Fit`;
                 graficoVendas = null;
             }
         }
+
+        function getStatusVenda(venda) {
+            const saldoAtual = venda.saldoRestante || venda.total;
+            const totalOriginal = venda.total || 0;
+            const hoje = new Date();
+            
+            if (venda.pagamento && venda.pagamento.formaPagamento === 'crediario') {
+                const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+                const valorDevedor = saldoAtual - totalPago;
+                
+                if (valorDevedor <= 0.01) {
+                    return 'PAGO';
+                }
+                
+                // Verificar se tem parcela vencida
+                const dataPromessa = venda.dataPromessa;
+                const parcelas = venda.pagamento?.parcelas || 1;
+                
+                if (dataPromessa) {
+                    const dataBase = new Date(dataPromessa + 'T00:00:00');
+                    
+                    for (let i = 0; i < parcelas; i++) {
+                        const dataParcela = new Date(dataBase);
+                        dataParcela.setMonth(dataParcela.getMonth() + i);
+                        
+                        // Verificar se parcela foi paga
+                        const pagamentosParcela = pagamentosVenda.filter(p => p.numeroParcela === (i + 1));
+                        const valorPagoParcela = pagamentosParcela.reduce((sum, p) => sum + p.valor, 0);
+                        const valorParcela = saldoAtual / parcelas;
+                        
+                        // Só considera vencida se a data passou E a parcela não foi paga completamente
+                        if (dataParcela < hoje && valorPagoParcela < (valorParcela - 0.01)) {
+                            return 'PENDENTE'; // Tem parcela vencida
+                        }
+                    }
+                    
+                    return 'EM DIA'; // Tem dívida mas nenhuma parcela venceu
+                } else {
+                    return 'PENDENTE';
+                }
+            } else {
+                return saldoAtual > totalOriginal ? 'PENDENTE' : 'PAGO';
+            }
+        }
+
+        async function gerarResumoVendas() {
+            try {
+                const dataInicio = document.getElementById('dataInicio').value;
+                const dataFim = document.getElementById('dataFim').value;
+                
+                if (!dataInicio || !dataFim) {
+                    alert('Selecione as datas de início e fim para gerar o resumo');
+                    return;
+                }
+
+                // Usar as vendas já carregadas ou carregar se necessário
+                let vendas = todasVendas;
+                if (!vendas || vendas.length === 0) {
+                    vendas = await FirebaseDatabase.obterVendas();
+                }
+                
+                // Filtrar por data
+                const vendasFiltradas = filtrarVendasPorData(vendas, dataInicio, dataFim);
+                
+                // Filtrar apenas vendas normais e pendentes
+                const vendasNormais = vendasFiltradas.filter(venda => {
+                    // Excluir retiradas internas
+                    if (venda.pagamento && venda.pagamento.formaPagamento === 'retirada_interna') {
+                        return false;
+                    }
+                    
+                    // Excluir vendas já pagas completamente
+                    if (venda.pagamento && venda.pagamento.formaPagamento === 'crediario') {
+                        const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                        const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+                        const saldoRestante = (venda.saldoRestante || venda.total) - totalPago;
+                        return saldoRestante > 0.01; // Só incluir se ainda deve
+                    }
+                    
+                    return true;
+                });
+                
+                // Agrupar por cliente
+                const resumoPorCliente = {};
+                let totalGeral = 0;
+                
+                vendasNormais.forEach(venda => {
+                    const nomeCliente = venda.cliente?.nome || 'Cliente não informado';
+                    let valorPendente = venda.total || 0;
+                    
+                    // Para crediário, calcular valor pendente
+                    if (venda.pagamento && venda.pagamento.formaPagamento === 'crediario') {
+                        const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                        const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+                        valorPendente = (venda.saldoRestante || venda.total) - totalPago;
+                    }
+                    
+                    if (!resumoPorCliente[nomeCliente]) {
+                        resumoPorCliente[nomeCliente] = {
+                            nome: nomeCliente,
+                            telefone: venda.cliente?.telefone || '',
+                            totalVendas: 0,
+                            quantidadeVendas: 0,
+                            vendas: []
+                        };
+                    }
+                    
+                    resumoPorCliente[nomeCliente].totalVendas += valorPendente;
+                    resumoPorCliente[nomeCliente].quantidadeVendas += 1;
+                    resumoPorCliente[nomeCliente].vendas.push({
+                        id: venda.id,
+                        data: venda.dataVenda,
+                        total: venda.total,
+                        valorPendente: valorPendente,
+                        formaPagamento: venda.pagamento?.formaPagamento || 'N/A'
+                    });
+                    
+                    totalGeral += valorPendente;
+                });
+                
+                // Converter para array e ordenar por total (maior primeiro)
+                const clientesOrdenados = Object.values(resumoPorCliente)
+                    .sort((a, b) => b.totalVendas - a.totalVendas);
+                
+                // Exibir no modal
+                exibirResumoVendas(clientesOrdenados, totalGeral);
+                
+            } catch (error) {
+                console.error('Erro ao gerar resumo de vendas:', error);
+                alert('Erro ao gerar resumo de vendas');
+            }
+        }
+
+        function exibirResumoVendas(clientes, totalGeral) {
+            const conteudo = document.getElementById('conteudoResumoVendas');
+            const totalGeralElement = document.getElementById('totalGeralResumo');
+            
+            if (clientes.length === 0) {
+                conteudo.innerHTML = '<p style="text-align: center; color: #666;">Nenhuma venda encontrada no período selecionado</p>';
+                totalGeralElement.textContent = 'Total Geral: R$ 0,00';
+            } else {
+                let html = `
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
+                        <thead>
+                            <tr style="background-color: #f8f9fa;">
+                                <th style="padding: 0.75rem; text-align: left; border: 1px solid #ddd;">Cliente</th>
+                                <th style="padding: 0.75rem; text-align: center; border: 1px solid #ddd;">Qtd Vendas</th>
+                                <th style="padding: 0.75rem; text-align: right; border: 1px solid #ddd;">Total Pendente</th>
+                                <th style="padding: 0.75rem; text-align: center; border: 1px solid #ddd;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                clientes.forEach((cliente, index) => {
+                    html += `
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 0.75rem; border: 1px solid #ddd;">
+                                <strong>${cliente.nome}</strong>
+                                ${cliente.telefone ? `<br><small style="color: #666;">${cliente.telefone}</small>` : ''}
+                            </td>
+                            <td style="padding: 0.75rem; text-align: center; border: 1px solid #ddd;">${cliente.quantidadeVendas}</td>
+                            <td style="padding: 0.75rem; text-align: right; border: 1px solid #ddd; font-weight: bold; color: #28a745;">R$ ${cliente.totalVendas.toFixed(2)}</td>
+                            <td style="padding: 0.75rem; text-align: center; border: 1px solid #ddd;">
+                                <button onclick="toggleDetalhesCliente(${index})" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; border: none; border-radius: 3px; cursor: pointer; background-color: #007bff; color: white; margin-right: 0.3rem;">Ver Detalhes</button>
+                                <button onclick="darBaixaCliente('${cliente.nome}', ${cliente.totalVendas})" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; border: none; border-radius: 3px; cursor: pointer; background-color: #28a745; color: white;">Dar Baixa</button>
+                            </td>
+                        </tr>
+                        <tr id="detalhes-${index}" style="display: none;">
+                            <td colspan="4" style="padding: 0; border: 1px solid #ddd;">
+                                <div style="padding: 1rem; background-color: #f8f9fa;">
+                                    <h5 style="margin: 0 0 0.5rem 0; color: #333;">Detalhes das Vendas:</h5>
+                                    ${cliente.vendas.map(venda => {
+                                        let dataFormatada = 'Data não informada';
+                                        try {
+                                            if (venda.data && venda.data.toDate) {
+                                                dataFormatada = venda.data.toDate().toLocaleDateString('pt-BR');
+                                            } else if (venda.data) {
+                                                dataFormatada = new Date(venda.data).toLocaleDateString('pt-BR');
+                                            }
+                                        } catch (error) {
+                                            dataFormatada = 'Data inválida';
+                                        }
+                                        
+                                        return `
+                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.3rem 0; border-bottom: 1px solid #ddd;">
+                                                <span>${dataFormatada}</span>
+                                                <span>${getFormaPagamentoTexto(venda.formaPagamento)}</span>
+                                                <span style="font-weight: bold;">R$ ${venda.valorPendente.toFixed(2)}</span>
+                                                <button onclick="darBaixaVenda('${venda.id}', '${cliente.nome}', ${venda.valorPendente})" style="padding: 0.2rem 0.4rem; font-size: 0.7rem; border: none; border-radius: 2px; cursor: pointer; background-color: #28a745; color: white;">Baixa</button>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                `;
+                
+                conteudo.innerHTML = html;
+                totalGeralElement.textContent = `Total Geral: R$ ${totalGeral.toFixed(2)}`;
+            }
+            
+            // Mostrar modal
+            document.getElementById('modalResumoVendas').style.display = 'block';
+        }
+
+        function toggleDetalhesCliente(index) {
+            const detalhes = document.getElementById(`detalhes-${index}`);
+            if (detalhes.style.display === 'none' || !detalhes.style.display) {
+                detalhes.style.display = 'table-row';
+            } else {
+                detalhes.style.display = 'none';
+            }
+        }
+
+        function fecharModalResumoVendas() {
+            document.getElementById('modalResumoVendas').style.display = 'none';
+        }
+
+        let vendaParaBaixa = null;
+        let vendaParaEditar = null;
+
+        function darBaixaVenda(vendaId, nomeCliente, valorPendente) {
+            vendaParaBaixa = { vendaId, nomeCliente, valorPendente, tipo: 'venda' };
+            document.getElementById('clienteBaixa').textContent = nomeCliente;
+            document.getElementById('valorPendenteBaixa').textContent = `R$ ${valorPendente}`;
+            document.getElementById('valorPagoBaixa').value = valorPendente;
+            document.getElementById('formaPagamentoBaixa').value = '';
+            document.getElementById('modalDarBaixa').style.display = 'block';
+        }
+
+        function editarValorDevedor(vendaId, nomeCliente, valorAtual) {
+            // Buscar dados completos da venda
+            const venda = todasVendas.find(v => v.id === vendaId);
+            if (!venda) {
+                alert('Venda não encontrada!');
+                return;
+            }
+            
+            // Calcular valor já pago
+            const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === vendaId);
+            const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+            const saldoRestante = venda.saldoRestante || venda.total;
+            const valorDevedor = saldoRestante - totalPago; // Pode ser negativo
+            
+            vendaParaEditar = { 
+                vendaId, 
+                nomeCliente, 
+                valorAtual: venda.total,
+                totalPago,
+                valorDevedor: Math.abs(valorDevedor)
+            };
+            
+            document.getElementById('clienteEditar').textContent = nomeCliente;
+            console.log('Editando venda:', {
+                id: vendaId,
+                cliente: nomeCliente,
+                total: venda.total,
+                saldoRestante: venda.saldoRestante,
+                totalPago,
+                valorDevedor
+            });
+            
+            document.getElementById('valorAtualEditar').innerHTML = `
+                <strong>Valor Total:</strong> R$ ${venda.total.toFixed(2)}<br>
+                <strong>Saldo Restante:</strong> R$ ${(venda.saldoRestante || venda.total).toFixed(2)}<br>
+                <strong>Já Pago:</strong> R$ ${totalPago.toFixed(2)}<br>
+                <strong>Devedor:</strong> R$ ${valorDevedor.toFixed(2)}
+            `;
+            document.getElementById('novoValorDevedor').value = Math.abs(valorDevedor).toFixed(2);
+            document.getElementById('modalEditarDevedor').style.display = 'block';
+        }
+
+        function fecharModalEditarDevedor() {
+            document.getElementById('modalEditarDevedor').style.display = 'none';
+            vendaParaEditar = null;
+        }
+
+        async function confirmarEdicaoDevedor() {
+            const novoValorDevedor = parseFloat(document.getElementById('novoValorDevedor').value);
+            
+            if (isNaN(novoValorDevedor) || novoValorDevedor < 0) {
+                alert('Digite um valor válido!');
+                return;
+            }
+            
+            if (!vendaParaEditar) {
+                alert('Erro: dados da edição não encontrados!');
+                return;
+            }
+            
+            // O valor digitado é o que ela deve voltar a dever
+            const valorARemover = novoValorDevedor;
+            const novoTotalPago = Math.max(0, vendaParaEditar.totalPago - valorARemover);
+            
+            if (!confirm(`Confirma reverter R$ ${valorARemover.toFixed(2)} do pagamento?\n\nPago atual: R$ ${vendaParaEditar.totalPago.toFixed(2)}\nNovo pago: R$ ${novoTotalPago.toFixed(2)}\nNovo devedor: R$ ${novoValorDevedor.toFixed(2)}`)) {
+                return;
+            }
+            
+            try {
+                // Buscar venda atual
+                const venda = todasVendas.find(v => v.id === vendaParaEditar.vendaId);
+                if (!venda) {
+                    alert('Venda não encontrada!');
+                    return;
+                }
+                
+                // Calcular novo saldo restante: saldo atual + valor a dever
+                const saldoAtual = venda.saldoRestante || venda.total || 0;
+                const novoSaldoRestante = saldoAtual + valorARemover;
+                
+                console.log('Atualizando venda:', {
+                    vendaId: vendaParaEditar.vendaId,
+                    saldoAtual,
+                    valorARemover,
+                    novoSaldoRestante
+                });
+                
+                // Atualizar venda no Firebase
+                await FirebaseDatabase.atualizarVenda(vendaParaEditar.vendaId, {
+                    saldoRestante: novoSaldoRestante
+                });
+                
+                // Buscar e remover pagamentos de parcelas
+                const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === vendaParaEditar.vendaId);
+                let valorRestanteParaRemover = valorARemover;
+                
+                // Remover pagamentos do mais recente para o mais antigo
+                for (let i = pagamentosVenda.length - 1; i >= 0 && valorRestanteParaRemover > 0; i--) {
+                    const pagamento = pagamentosVenda[i];
+                    
+                    if (pagamento.valor <= valorRestanteParaRemover) {
+                        // Remover pagamento completo
+                        await db.collection('pagamentos_parcelas').doc(pagamento.id).delete();
+                        valorRestanteParaRemover -= pagamento.valor;
+                    } else {
+                        // Reduzir valor do pagamento
+                        const novoValorPagamento = pagamento.valor - valorRestanteParaRemover;
+                        await db.collection('pagamentos_parcelas').doc(pagamento.id).update({
+                            valor: novoValorPagamento
+                        });
+                        valorRestanteParaRemover = 0;
+                    }
+                }
+                
+                // Registrar no histórico
+                await FirebaseDatabase.registrarHistorico(
+                    'Reversão de Pagamento',
+                    `Cliente: ${vendaParaEditar.nomeCliente} - Removido R$ ${valorARemover.toFixed(2)} dos pagamentos (Novo devedor: R$ ${novoValorDevedor.toFixed(2)})`,
+                    firebase.auth().currentUser?.email || 'Usuário não identificado'
+                );
+                
+                alert(`Pagamento revertido com sucesso!\nValor removido: R$ ${valorARemover.toFixed(2)}\nNovo devedor: R$ ${novoValorDevedor.toFixed(2)}`);
+                fecharModalEditarDevedor();
+                
+                // Forçar recarregamento completo dos dados
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 500);
+                
+            } catch (error) {
+                console.error('Erro ao reverter pagamento:', error);
+                alert('Erro ao reverter pagamento.');
+            }
+        }
+
+        function darBaixaCliente(nomeCliente, totalPendente) {
+            vendaParaBaixa = { nomeCliente, totalPendente, tipo: 'cliente' };
+            document.getElementById('clienteBaixa').textContent = nomeCliente;
+            document.getElementById('valorPendenteBaixa').textContent = `R$ ${totalPendente.toFixed(2)}`;
+            document.getElementById('valorPagoBaixa').value = totalPendente.toFixed(2);
+            document.getElementById('formaPagamentoBaixa').value = '';
+            document.getElementById('modalDarBaixa').style.display = 'block';
+        }
+
+        function fecharModalDarBaixa() {
+            document.getElementById('modalDarBaixa').style.display = 'none';
+            vendaParaBaixa = null;
+        }
+
+        async function confirmarBaixa() {
+            const valorPago = parseFloat(document.getElementById('valorPagoBaixa').value);
+            const formaPagamento = document.getElementById('formaPagamentoBaixa').value;
+            
+            if (!valorPago || valorPago <= 0) {
+                alert('Digite um valor válido!');
+                return;
+            }
+            
+            if (!formaPagamento) {
+                alert('Selecione a forma de pagamento!');
+                return;
+            }
+            
+            if (!vendaParaBaixa) {
+                alert('Erro: dados da baixa não encontrados!');
+                return;
+            }
+            
+            try {
+                if (vendaParaBaixa.tipo === 'venda') {
+                    // Baixa de venda específica
+                    await FirebaseDatabase.registrarPagamentoParcela({
+                        vendaId: vendaParaBaixa.vendaId,
+                        numeroParcela: 1,
+                        valor: valorPago,
+                        formaPagamento: formaPagamento,
+                        valorOriginalParcela: vendaParaBaixa.valorPendente
+                    });
+                } else {
+                    // Baixa de cliente (todas as vendas pendentes)
+                    const vendasCliente = todasVendas.filter(venda => 
+                        venda.cliente?.nome === vendaParaBaixa.nomeCliente &&
+                        venda.pagamento?.formaPagamento === 'crediario'
+                    );
+                    
+                    let valorRestante = valorPago;
+                    for (const venda of vendasCliente) {
+                        if (valorRestante <= 0) break;
+                        
+                        const pagamentosVenda = pagamentosParcelas.filter(p => p.vendaId === venda.id);
+                        const totalPago = pagamentosVenda.reduce((sum, p) => sum + p.valor, 0);
+                        const saldoPendente = (venda.saldoRestante || venda.total) - totalPago;
+                        
+                        if (saldoPendente > 0) {
+                            const valorParaEstaVenda = Math.min(valorRestante, saldoPendente);
+                            await FirebaseDatabase.registrarPagamentoParcela({
+                                vendaId: venda.id,
+                                numeroParcela: 1,
+                                valor: valorParaEstaVenda,
+                                formaPagamento: formaPagamento,
+                                valorOriginalParcela: saldoPendente
+                            });
+                            valorRestante -= valorParaEstaVenda;
+                        }
+                    }
+                }
+                
+                alert(`Baixa de R$ ${valorPago.toFixed(2)} registrada com sucesso!`);
+                fecharModalDarBaixa();
+                
+                // Recarregar dados
+                pagamentosParcelas = await FirebaseDatabase.obterPagamentosParcelas();
+                gerarResumoVendas();
+                
+            } catch (error) {
+                console.error('Erro ao registrar baixa:', error);
+                alert('Erro ao registrar baixa.');
+            }
+        }
+        async function reverterParcela(vendaId, numeroParcela, nomeCliente, valorParcela) {
+            if (!confirm(`Tem certeza que deseja reverter a parcela ${numeroParcela} de ${nomeCliente}?\n\nValor: R$ ${valorParcela}\n\nEsta ação irá:\n- Remover o pagamento da parcela\n- Devolver o dinheiro ao caixa (será retirado do total)`)) {
+                return;
+            }
+            
+            try {
+                // Buscar pagamentos desta parcela
+                const pagamentosParcela = pagamentosParcelas.filter(p => 
+                    p.vendaId === vendaId && p.numeroParcela === numeroParcela
+                );
+                
+                if (pagamentosParcela.length === 0) {
+                    alert('Nenhum pagamento encontrado para esta parcela!');
+                    return;
+                }
+                
+                // Remover todos os pagamentos desta parcela
+                for (const pagamento of pagamentosParcela) {
+                    await db.collection('pagamentos_parcelas').doc(pagamento.id).delete();
+                }
+                
+                // Registrar no histórico
+                await FirebaseDatabase.registrarHistorico(
+                    'REVERSAO_PARCELA',
+                    {
+                        vendaId: vendaId,
+                        cliente: nomeCliente,
+                        numeroParcela: numeroParcela,
+                        valor: valorParcela
+                    },
+                    firebase.auth().currentUser?.email || 'Usuário não identificado'
+                );
+                
+                alert(`Parcela ${numeroParcela} revertida com sucesso!\nValor de R$ ${valorParcela} foi removido do caixa.`);
+                
+                // Recarregar relatório
+                gerarRelatorio();
+                
+            } catch (error) {
+                console.error('Erro ao reverter parcela:', error);
+                alert('Erro ao reverter parcela.');
+            }
+        }
+        
+        // Event listener para fechar modais ao clicar fora
+        document.addEventListener('click', function(event) {
+            const modalPagamento = document.getElementById('modalPagamento');
+            if (event.target === modalPagamento) {
+                fecharModalPagamento();
+            }
+            
+            const modalResumo = document.getElementById('modalResumoVendas');
+            if (event.target === modalResumo) {
+                fecharModalResumoVendas();
+            }
+            
+            const modalBaixa = document.getElementById('modalDarBaixa');
+            if (event.target === modalBaixa) {
+                fecharModalDarBaixa();
+            }
+            
+            const modalEditar = document.getElementById('modalEditarDevedor');
+            if (event.target === modalEditar) {
+                fecharModalEditarDevedor();
+            }
+        });
+    
+        let vendaEstornoCrediarioId = null;
+
+        function abrirModalEstornoCrediario(vendaId, nomeCliente) {
+            vendaEstornoCrediarioId = vendaId;
+            document.getElementById('clienteEstornoCrediario').textContent = nomeCliente;
+            document.getElementById('motivoEstornoCrediario').value = '';
+            document.getElementById('modalEstornoCrediario').style.display = 'flex';
+        }
+
+        function fecharModalEstornoCrediario() {
+            document.getElementById('modalEstornoCrediario').style.display = 'none';
+            vendaEstornoCrediarioId = null;
+        }
+
+        async function confirmarEstornoCrediario() {
+            const motivo = document.getElementById('motivoEstornoCrediario').value.trim();
+            if (!motivo) { alert('Descreva o motivo do estorno!'); return; }
+
+            try {
+                const venda = todasVendas.find(v => v.id === vendaEstornoCrediarioId);
+                if (!venda) { alert('Venda não encontrada!'); return; }
+
+                const user = firebase.auth().currentUser;
+                const userEmail = user ? user.email : 'desconhecido';
+
+                // Restaurar estoque
+                for (const item of venda.itens) {
+                    const pecas = await FirebaseDatabase.obterPecas();
+                    const peca = pecas.find(p => p.id === item.produtoId);
+                    if (peca) await FirebaseDatabase.atualizarEstoque(item.produtoId, peca.estoque + item.quantidade);
+                }
+
+                // Remover pagamentos de parcelas
+                const pagamentos = await FirebaseDatabase.obterPagamentosParcelas();
+                for (const p of pagamentos.filter(p => p.vendaId === vendaEstornoCrediarioId)) {
+                    await db.collection('pagamentos_parcelas').doc(p.id).delete();
+                }
+
+                // Registrar histórico
+                await FirebaseDatabase.registrarHistorico('ESTORNO_VENDA', {
+                    vendaId: vendaEstornoCrediarioId,
+                    cliente: venda.cliente?.nome,
+                    total: venda.total,
+                    motivo: motivo,
+                    itens: venda.itens.map(i => i.quantidade + 'x ' + i.nome)
+                }, userEmail);
+
+                // Excluir venda
+                await FirebaseDatabase.excluirVenda(vendaEstornoCrediarioId);
+
+                alert('Estorno realizado com sucesso!\n\n✅ Peças devolvidas ao estoque\n✅ Pagamentos removidos\n✅ Venda cancelada');
+                fecharModalEstornoCrediario();
+                gerarRelatorio();
+
+            } catch (e) {
+                console.error(e);
+                alert('Erro ao processar estorno.');
+            }
+        }
+
     </script>
+
+    <!-- Modal Estorno Crediario -->
+    <div id="modalEstornoCrediario" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:2000;justify-content:center;align-items:center;display:none;">
+        <div style="background:#0f0f18;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:2rem;width:90%;max-width:420px;color:#f0f0f0;">
+            <h3 style="color:#ff8c00;margin-bottom:1rem;">&#8617; Estorno de Venda</h3>
+            <p style="color:#888;font-size:0.9rem;margin-bottom:1rem;">Cliente: <strong id="clienteEstornoCrediario" style="color:#f0f0f0;"></strong></p>
+            <p style="color:#888;font-size:0.85rem;margin-bottom:1rem;">As pe&#231;as ser&#227;o devolvidas ao estoque e a venda ser&#225; cancelada.</p>
+            <div class="form-group">
+                <label for="motivoEstornoCrediario">Motivo do estorno:</label>
+                <textarea id="motivoEstornoCrediario" rows="3" style="width:100%;resize:vertical;" placeholder="Ex: Cliente devolveu as pe&#231;as, n&#227;o gostou..."></textarea>
+            </div>
+            <div style="text-align:right;margin-top:1rem;">
+                <button class="btn btn-secondary" onclick="fecharModalEstornoCrediario()">Cancelar</button>
+                <button class="btn" onclick="confirmarEstornoCrediario()" style="background:#ff8c00;margin-left:0.5rem;">Confirmar Estorno</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

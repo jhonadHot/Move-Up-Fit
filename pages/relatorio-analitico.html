@@ -11,10 +11,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .filtros {
-            background: white;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin: 0 auto 2rem auto;
             width: 90%;
             max-width: 1200px;
@@ -31,10 +31,10 @@
             margin-bottom: 2rem;
         }
         .analise-card {
-            background: white;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             width: 90%;
             max-width: 1200px;
             margin: 0 auto 2rem auto;
@@ -42,7 +42,7 @@
         .analise-card h3 {
             text-align: center;
             margin-bottom: 1.5rem;
-            color: #333;
+            color: #f0f0f0;
         }
         .ranking-item {
             display: flex;
@@ -50,32 +50,33 @@
             align-items: center;
             padding: 0.8rem;
             margin: 0.5rem 0;
-            border: 1px solid #ddd;
+            border: 1px solid rgba(255,255,255,0.08);
             border-radius: 4px;
-            background: #f8f9fa;
+            background: rgba(255,255,255,0.04);
+            color: #f0f0f0;
         }
         .ranking-item:first-child {
-            background: #d4edda;
-            border-color: #c3e6cb;
+            background: rgba(40,167,69,0.15);
+            border-color: rgba(40,167,69,0.3);
         }
         .ranking-item:nth-child(2) {
-            background: #fff3cd;
-            border-color: #ffeaa7;
+            background: rgba(255,193,7,0.1);
+            border-color: rgba(255,193,7,0.3);
         }
         .ranking-item:nth-child(3) {
-            background: #f8d7da;
-            border-color: #f5c6cb;
+            background: rgba(220,53,69,0.1);
+            border-color: rgba(220,53,69,0.3);
         }
         .grafico-container {
-            background: white;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
+            }
         .grafico-container h3 {
             margin: 0 0 1rem 0;
             text-align: center;
-            color: #333;
+            color: #f0f0f0;
         }
         @media (max-width: 768px) {
             .analise-container {
@@ -95,8 +96,11 @@
         </div>
     </header>
 
-    <div class="sidebar" id="sidebar">
-        <button class="menu-toggle" id="menuToggle">☰</button>
+    <button class="menu-toggle" id="menuToggle">&#9654;</button>
+
+    <button onclick="history.back()" style="position:fixed;top:calc(var(--header-height) + 12px);right:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#888;padding:0.4rem 0.9rem;border-radius:8px;cursor:pointer;font-size:0.82rem;font-family:Inter,sans-serif;z-index:1001;transition:all 0.2s;" class="btn-voltar" onmouseover="this.style.color='#f0f0f0'" onmouseout="this.style.color='#888'">&#8592; Voltar</button>
+
+ <div class="sidebar" id="sidebar">
         <nav class="nav-menu">
             <ul>
                 <li><a href="../index.html">Início</a></li>
