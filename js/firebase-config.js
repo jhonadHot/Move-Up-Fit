@@ -1,6 +1,6 @@
 // Configuração do Firebase - SUBSTITUA PELAS SUAS CREDENCIAIS
 const firebaseConfig = {
-  apiKey: "AIzaSyBKS4L8iczSlOVlJUiM7ehaPx7oMW8AJQ8",
+  apiKey: "AIzaSyCAodEf1E-CfUUm8u1O_fJzBlb8snwKcM4",
   authDomain: "move-up-fit.firebaseapp.com",
   projectId: "move-up-fit",
   storageBucket: "move-up-fit.firebasestorage.app",
