@@ -1,6 +1,6 @@
 // Configuração do Firebase - SUBSTITUA PELAS SUAS CREDENCIAIS
 const firebaseConfig = {
-  apiKey: "AIzaSyCAodEf1E-CfUUm8u1O_fJzBlb8snwKcM4",
+  apiKey: "AIzaSyBKS4L8iczSlOVlJUiM7ehaPx7oMW8AJQ8",
   authDomain: "move-up-fit.firebaseapp.com",
   projectId: "move-up-fit",
   storageBucket: "move-up-fit.firebasestorage.app",
@@ -117,12 +117,11 @@ class FirebaseDatabase {
 
     static async obterNivelUsuario(uid) {
         try {
-            // Verificar se é o email master pelo uid
             const user = firebase.auth().currentUser;
-            if (user && user.email === 'jhonatann.andrade@gmail.com') {
-                return 'master';
-            }
             const doc = await db.collection('usuarios').doc(uid).get();
+            if (doc.exists && doc.data().nivel === 'master') return 'master';
+            // Fallback: verificar campo isMaster no documento
+            if (doc.exists && doc.data().isMaster) return 'master';
             return doc.exists ? doc.data().nivel : 'usuario';
         } catch (error) {
             console.error("Erro ao obter nível:", error);

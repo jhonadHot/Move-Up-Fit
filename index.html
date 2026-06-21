@@ -393,6 +393,22 @@
         document.getElementById('dataAtual').textContent =
             `${dias[agora.getDay()]}, ${agora.getDate()} de ${meses[agora.getMonth()]} de ${agora.getFullYear()}`;
 
+        // Timeout de sessão: 8 horas de inatividade
+        let timeoutSessao;
+        function resetarTimeout() {
+            clearTimeout(timeoutSessao);
+            timeoutSessao = setTimeout(function() {
+                firebase.auth().signOut().then(() => {
+                    alert('Sessão expirada por inatividade. Faça login novamente.');
+                    window.location.href = 'login.html';
+                });
+            }, 8 * 60 * 60 * 1000); // 8 horas
+        }
+        ['click','keydown','mousemove','touchstart'].forEach(function(e) {
+            document.addEventListener(e, resetarTimeout, { passive: true });
+        });
+        resetarTimeout();
+
         firebase.auth().onAuthStateChanged(async function(user) {
             if (!user) {
                 window.location.href = 'login.html';
