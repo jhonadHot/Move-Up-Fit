@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Move Up Fit</title>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <script src="/js/firebase-config.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const mode    = params.get('mode');
+        const oobCode = params.get('oobCode');
+
+        if (mode === 'resetPassword' && oobCode) {
+            // Redireciona para nossa página de redefinição com o oobCode
+            window.location.href = '/redefinir-senha.html?oobCode=' + oobCode;
+        } else {
+            // Outros modos (verificação de email, etc.) — deixa o Firebase tratar
+            window.location.href = 'https://move-up-fit.firebaseapp.com/__/auth/action' + window.location.search;
+        }
+    </script>
+</body>
+</html>

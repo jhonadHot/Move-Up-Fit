@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redefinir Senha - Move Up Fit</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23ff4500'/><text y='.9em' font-size='80' x='10'>🏋</text></svg>">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <style>
+        body { background: #0a0a0f; overflow: hidden; }
+
+        .bg-animation { position: fixed; inset: 0; z-index: 0; }
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(255,69,0,0.12) 0%, transparent 70%);
+            top: -150px; right: -100px;
+            animation: pulse 6s ease-in-out infinite;
+        }
+        .bg-animation::after {
+            content: '';
+            position: absolute;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(255,69,0,0.07) 0%, transparent 70%);
+            bottom: -100px; left: -100px;
+            animation: pulse 6s ease-in-out infinite reverse;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.7; }
+        }
+
+        .grid-lines {
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(255,69,0,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,69,0,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: 0;
+        }
+
+        .login-container {
+            position: relative; z-index: 1;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; padding: 1rem;
+        }
+
+        .login-card {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 2.5rem;
+            width: 100%; max-width: 400px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,69,0,0.1);
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-login { text-align: center; margin-bottom: 2rem; }
+        .logo-login img {
+            height: 60px;
+            filter: drop-shadow(0 0 12px rgba(255,69,0,0.4));
+        }
+
+        .login-title {
+            text-align: center;
+            font-size: 0.75rem; font-weight: 600;
+            letter-spacing: 3px; text-transform: uppercase;
+            color: #555; margin-bottom: 2rem;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+            margin: 1.5rem 0;
+        }
+
+        .form-group label {
+            font-size: 0.75rem; font-weight: 600;
+            letter-spacing: 1px; text-transform: uppercase; color: #666;
+        }
+
+        .input-wrapper input {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px; color: #f0f0f0;
+            font-family: 'Inter', sans-serif; font-size: 0.95rem;
+            padding: 0.8rem 1rem; width: 100%; transition: all 0.2s;
+        }
+        .input-wrapper input:focus {
+            outline: none; border-color: #ff4500;
+            background: rgba(255,69,0,0.05);
+            box-shadow: 0 0 0 3px rgba(255,69,0,0.15);
+        }
+        .input-wrapper input::placeholder { color: #333; }
+
+        .btn-login {
+            width: 100%; padding: 0.9rem;
+            background: linear-gradient(135deg, #ff4500, #cc3700);
+            color: white; border: none; border-radius: 10px;
+            font-size: 0.9rem; font-weight: 700;
+            letter-spacing: 1px; text-transform: uppercase;
+            cursor: pointer; transition: all 0.3s;
+            font-family: 'Inter', sans-serif; margin-top: 0.5rem;
+        }
+        .btn-login:hover {
+            box-shadow: 0 8px 25px rgba(255,69,0,0.4);
+            transform: translateY(-2px);
+        }
+        .btn-login:active { transform: translateY(0); }
+        .btn-login:disabled { opacity: 0.6; pointer-events: none; }
+
+        .feedback {
+            font-size: 0.82rem; margin-top: 1rem;
+            padding: 0.6rem 0.8rem; border-radius: 6px; display: none;
+        }
+        .feedback.success {
+            color: #4caf50;
+            background: rgba(76,175,80,0.1);
+            border: 1px solid rgba(76,175,80,0.2);
+        }
+        .feedback.error {
+            color: #ff6b6b;
+            background: rgba(255,107,107,0.1);
+            border: 1px solid rgba(255,107,107,0.2);
+        }
+
+        .link-voltar {
+            display: block; text-align: center; margin-top: 1.2rem;
+            color: #555; font-size: 0.82rem; text-decoration: none;
+            transition: color 0.2s;
+        }
+        .link-voltar:hover { color: #ff4500; }
+
+        /* Estado de link inválido/expirado */
+        .estado-invalido { text-align: center; }
+        .estado-invalido .icone { font-size: 3rem; margin-bottom: 1rem; }
+        .estado-invalido h3 { color: #f0f0f0; margin-bottom: 0.5rem; }
+        .estado-invalido p { color: #666; font-size: 0.85rem; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    <div class="grid-lines"></div>
+
+    <div class="login-container">
+        <div class="login-card">
+            <div class="logo-login">
+                <img src="assets/images/Move-Up.png" alt="Move Up Fit">
+            </div>
+
+            <!-- Formulário de nova senha -->
+            <div id="formRedefinir">
+                <p class="login-title">Nova Senha</p>
+                <div class="divider"></div>
+
+                <div class="form-group">
+                    <label for="novaSenha">Nova Senha</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="novaSenha" placeholder="••••••••" minlength="6" autocomplete="new-password">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label for="confirmarSenha">Confirmar Senha</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="confirmarSenha" placeholder="••••••••" minlength="6" autocomplete="new-password">
+                    </div>
+                </div>
+
+                <div class="feedback" id="feedback"></div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <button class="btn-login" id="btnRedefinir" onclick="redefinirSenha()">Salvar Nova Senha</button>
+                </div>
+            </div>
+
+            <!-- Estado: link inválido ou expirado -->
+            <div id="estadoInvalido" style="display:none;" class="estado-invalido">
+                <div class="divider"></div>
+                <div class="icone">⚠️</div>
+                <h3>Link inválido ou expirado</h3>
+                <p>Este link de redefinição não é mais válido.<br>Solicite um novo link na tela de login.</p>
+                <a href="login.html" class="btn-login" style="display:block;margin-top:1.5rem;text-decoration:none;text-align:center;padding:0.9rem;">
+                    Voltar ao Login
+                </a>
+            </div>
+
+            <a href="login.html" class="link-voltar" id="linkVoltar">← Voltar ao login</a>
+        </div>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const oobCode = params.get('oobCode');
+        const mode    = params.get('mode');
+
+        // Firebase redireciona para cá com ?mode=resetPassword&oobCode=XXX
+        // ou com ?mode=resetPassword sem oobCode (link antigo sem continueUrl)
+        if (!oobCode || mode !== 'resetPassword') {
+            mostrarInvalido();
+        } else {
+            firebase.auth().verifyPasswordResetCode(oobCode)
+                .catch(() => mostrarInvalido());
+        }
+
+        function mostrarInvalido() {
+            document.getElementById('formRedefinir').style.display = 'none';
+            document.getElementById('estadoInvalido').style.display = 'block';
+            document.getElementById('linkVoltar').style.display = 'none';
+        }
+
+        async function redefinirSenha() {
+            const novaSenha     = document.getElementById('novaSenha').value;
+            const confirmar     = document.getElementById('confirmarSenha').value;
+            const feedback      = document.getElementById('feedback');
+            const btn           = document.getElementById('btnRedefinir');
+
+            feedback.style.display = 'none';
+
+            if (novaSenha.length < 6) {
+                mostrarFeedback('A senha deve ter pelo menos 6 caracteres.', 'error');
+                return;
+            }
+            if (novaSenha !== confirmar) {
+                mostrarFeedback('As senhas não coincidem.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                await firebase.auth().confirmPasswordReset(oobCode, novaSenha);
+                mostrarFeedback('Senha redefinida com sucesso! Redirecionando...', 'success');
+                btn.textContent = 'Salvo ✓';
+                setTimeout(() => window.location.href = 'login.html', 2500);
+            } catch (error) {
+                mostrarFeedback('Erro ao redefinir senha. O link pode ter expirado.', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Salvar Nova Senha';
+            }
+        }
+
+        function mostrarFeedback(msg, tipo) {
+            const el = document.getElementById('feedback');
+            el.textContent = msg;
+            el.className = `feedback ${tipo}`;
+            el.style.display = 'block';
+        }
+
+        // Permite confirmar com Enter
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter') redefinirSenha();
+        });
+    </script>
+</body>
+</html>

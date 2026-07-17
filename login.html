@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Move Up Fit</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23ff4500'/><text y='.9em' font-size='80' x='10'>🏋</text></svg>">
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
@@ -196,6 +197,118 @@
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
             margin: 1.5rem 0;
         }
+
+        .forgot-link {
+            display: block;
+            text-align: center;
+            margin-top: 1rem;
+            color: #ff4500;
+            font-size: 0.82rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.5px;
+            transition: opacity 0.2s;
+        }
+        .forgot-link:hover { opacity: 0.75; }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-box {
+            background: #141418;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+        .modal-box h3 {
+            color: #f0f0f0;
+            font-size: 1rem;
+            margin: 0 0 0.4rem;
+        }
+        .modal-box p {
+            color: #666;
+            font-size: 0.82rem;
+            margin: 0 0 1.2rem;
+        }
+        .modal-box input {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            color: #f0f0f0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            padding: 0.8rem 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            transition: all 0.2s;
+        }
+        .modal-box input:focus {
+            outline: none;
+            border-color: #ff4500;
+            box-shadow: 0 0 0 3px rgba(255,69,0,0.15);
+        }
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.2rem;
+        }
+        .btn-cancel {
+            flex: 1;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.06);
+            color: #aaa;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-cancel:hover { background: rgba(255,255,255,0.1); }
+        .btn-send {
+            flex: 1;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #ff4500, #cc3700);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-send:hover { opacity: 0.85; }
+        .modal-feedback {
+            font-size: 0.82rem;
+            margin-top: 0.75rem;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            display: none;
+        }
+        .modal-feedback.success {
+            color: #4caf50;
+            background: rgba(76,175,80,0.1);
+            border: 1px solid rgba(76,175,80,0.2);
+        }
+        .modal-feedback.error {
+            color: #ff6b6b;
+            background: rgba(255,107,107,0.1);
+            border: 1px solid rgba(255,107,107,0.2);
+        }
     </style>
 </head>
 <body>
@@ -205,7 +318,7 @@
     <div class="login-container">
         <div class="login-card">
             <div class="logo-login">
-                <img src="assets/images/Move Up.png" alt="Move Up Fit">
+                <img src="assets/images/Move-Up.png" alt="Move Up Fit">
             </div>
 
             <p class="login-title">Acesso ao Sistema</p>
@@ -233,11 +346,34 @@
                     <button type="submit" class="btn-login" id="btnLogin">Entrar</button>
                 </div>
             </form>
+
+            <button class="forgot-link" onclick="abrirModalRecuperacao()">Esqueceu a senha?</button>
         </div>
     </div>
 
+    <!-- Modal Recuperação de Senha -->
+    <div class="modal-overlay" id="modalRecuperacao">
+        <div class="modal-box">
+            <h3>Recuperar senha</h3>
+            <p>Informe seu email e enviaremos um link para redefinir sua senha.</p>
+            <input type="email" id="emailRecuperacao" placeholder="seu@email.com" autocomplete="email">
+            <div class="modal-feedback" id="modalFeedback"></div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="fecharModalRecuperacao()">Cancelar</button>
+                <button class="btn-send" id="btnEnviarReset" onclick="enviarRecuperacao()">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="js/firebase-config.js"></script>
     <script>
+        // ─── EmailJS ───────────────────────────────────────────
+        const EMAILJS_PUBLIC_KEY  = 'bW5KhfKtecBze9t_h';
+        const EMAILJS_SERVICE_ID  = 'service_evrssdx';
+        const EMAILJS_TEMPLATE_ID = 'template_qde119o';
+        emailjs.init(EMAILJS_PUBLIC_KEY);
+        // ───────────────────────────────────────────────────────
         function mostrarErro(mensagem) {
             const el = document.getElementById('errorMessage');
             el.textContent = mensagem;
@@ -256,8 +392,13 @@
             btn.textContent = 'Entrando...';
 
             try {
-                await firebase.auth().signInWithEmailAndPassword(email, password);
-                window.location.href = 'index.html';
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const doc = await db.collection('usuarios').doc(userCredential.user.uid).get();
+                if (doc.exists && doc.data().deveAlterarSenha) {
+                    window.location.href = 'trocar-senha.html';
+                } else {
+                    window.location.href = 'index.html';
+                }
             } catch (error) {
                 mostrarErro('Email ou senha incorretos');
                 btn.classList.remove('loading');
@@ -267,6 +408,58 @@
 
         firebase.auth().onAuthStateChanged(function(user) {
             if (user) window.location.href = 'index.html';
+        });
+
+        function abrirModalRecuperacao() {
+            document.getElementById('emailRecuperacao').value = '';
+            document.getElementById('modalFeedback').style.display = 'none';
+            document.getElementById('btnEnviarReset').disabled = false;
+            document.getElementById('btnEnviarReset').textContent = 'Enviar';
+            document.getElementById('modalRecuperacao').classList.add('active');
+            setTimeout(() => document.getElementById('emailRecuperacao').focus(), 100);
+        }
+
+        function fecharModalRecuperacao() {
+            document.getElementById('modalRecuperacao').classList.remove('active');
+        }
+
+        async function enviarRecuperacao() {
+            const email = document.getElementById('emailRecuperacao').value.trim();
+            const feedback = document.getElementById('modalFeedback');
+            const btn = document.getElementById('btnEnviarReset');
+
+            if (!email) {
+                feedback.textContent = 'Informe um email válido.';
+                feedback.className = 'modal-feedback error';
+                feedback.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+            feedback.style.display = 'none';
+
+            try {
+                await firebase.auth().sendPasswordResetEmail(email);
+                feedback.textContent = 'Email enviado! Verifique sua caixa de entrada.';
+                feedback.className = 'modal-feedback success';
+                feedback.style.display = 'block';
+                btn.textContent = 'Enviado ✓';
+            } catch (error) {
+                if (error.code === 'auth/user-not-found') {
+                    feedback.textContent = 'Nenhuma conta encontrada com este email.';
+                } else {
+                    feedback.textContent = 'Não foi possível processar a solicitação.';
+                }
+                feedback.className = 'modal-feedback error';
+                feedback.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Enviar';
+            }
+        }
+
+        document.getElementById('modalRecuperacao').addEventListener('click', function(e) {
+            if (e.target === this) fecharModalRecuperacao();
         });
     </script>
 </body>

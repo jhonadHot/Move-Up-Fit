@@ -109,7 +109,7 @@ class FirebaseDatabase {
                 email: email,
                 nivel: nivel,
                 dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            }, { merge: true });
         } catch (error) {
             console.error("Erro ao criar usuário:", error);
         }
@@ -117,12 +117,17 @@ class FirebaseDatabase {
 
     static async obterNivelUsuario(uid) {
         try {
-            const user = firebase.auth().currentUser;
             const doc = await db.collection('usuarios').doc(uid).get();
-            if (doc.exists && doc.data().nivel === 'master') return 'master';
-            // Fallback: verificar campo isMaster no documento
-            if (doc.exists && doc.data().isMaster) return 'master';
-            return doc.exists ? doc.data().nivel : 'usuario';
+            if (!doc.exists) {
+                // Usuário autenticado mas sem doc no Firestore: criar como 'usuario'
+                const user = firebase.auth().currentUser;
+                if (user) {
+                    await FirebaseDatabase.criarUsuario(uid, user.email, 'usuario');
+                }
+                return 'usuario';
+            }
+            if (doc.data().nivel === 'master' || doc.data().isMaster) return 'master';
+            return doc.data().nivel || 'usuario';
         } catch (error) {
             console.error("Erro ao obter nível:", error);
             return 'usuario';

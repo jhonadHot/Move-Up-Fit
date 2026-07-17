@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciar Usuários - Sistema de Gestão</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23ff4500'/></svg>">
+
     <link rel="stylesheet" href="../css/styles.css">
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
@@ -12,7 +14,7 @@
 <body>
     <header class="header">
         <div class="logo">
-            <img src="../assets/images/Move Up.png" alt="Move Up Fit">
+            <img src="../assets/images/Move-Up.png" alt="Move Up Fit">
         </div>
     </header>
 
@@ -155,6 +157,7 @@
                             <strong>Nível:</strong> ${user.nivel}<br>
                             <div style="margin-top: 0.5rem;">
                                 <button class="btn" style="padding: 0.3rem 0.8rem; margin-right: 0.5rem;" onclick="editarUsuario('${user.id}', '${user.email}', '${user.nivel}')">Editar</button>
+                                <button class="btn" style="padding: 0.3rem 0.8rem; margin-right: 0.5rem; background: linear-gradient(135deg,#e67e22,#d35400);" onclick="resetarSenha('${user.id}', '${user.email}')">Resetar Senha</button>
                                 ${excluirBtn}
                             </div>
                         </div>
@@ -232,6 +235,28 @@
             }
         }
 
+        async function resetarSenha(uid, email) {
+            if (!confirm(`Resetar a senha de "${email}"?\n\nUm email de redefinição será enviado para o usuário.`)) return;
+
+            try {
+                // Envia email de reset pelo Firebase
+                await firebase.auth().sendPasswordResetEmail(email);
+
+                // Salva flag para obrigar troca no próximo acesso
+                await db.collection('usuarios').doc(uid).update({
+                    deveAlterarSenha: true
+                });
+
+                alert(`Email de redefinição enviado para ${email}!\n\nO usuário receberá um link para criar uma nova senha.`);
+            } catch (error) {
+                if (error.code === 'auth/user-not-found') {
+                    alert('Usuário não encontrado no sistema de autenticação.');
+                } else {
+                    alert('Erro ao resetar senha: ' + error.message);
+                }
+            }
+        }
+
         // Cadastrar/Editar usuário
         document.getElementById('cadastroUsuario').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -275,8 +300,21 @@
                     cancelarEdicao();
                 } else {
                     // Modo cadastro - criar novo usuário
+                    // Salvar credenciais do master atual antes de criar novo usuário
+                    const masterUser = firebase.auth().currentUser;
+                    const masterEmail = masterUser.email;
+                    const masterSenha = prompt('Para cadastrar um novo usuário, confirme sua senha de master:');
+                    if (!masterSenha) {
+                        alert('Senha do master é obrigatória.');
+                        return;
+                    }
+
                     const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
                     await FirebaseDatabase.criarUsuario(userCredential.user.uid, email, nivel);
+
+                    // Relogar como master imediatamente
+                    await firebase.auth().signInWithEmailAndPassword(masterEmail, masterSenha);
+
                     alert('Usuário cadastrado com sucesso!');
                     this.reset();
                 }
