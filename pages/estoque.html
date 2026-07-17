@@ -234,6 +234,11 @@
                 <option value="top">TOP</option>
                 <option value="vestido">Vestido</option>
             </select>
+            <select id="filtroEstoque" onchange="filtrarPecas()">
+                <option value="">Todos os estoques</option>
+                <option value="disponivel">Em estoque</option>
+                <option value="esgotado">Sem estoque</option>
+            </select>
             <button class="btn" onclick="carregarPecas()">Atualizar</button>
             <button class="btn btn-secondary" onclick="imprimirRelatorio()" style="background-color: #28a745;">Imprimir</button>
         </div>
@@ -443,13 +448,17 @@
             const filtroNome = document.getElementById('filtroNome').value.toLowerCase();
             const filtroMarca = document.getElementById('filtroMarca').value;
             const filtroCategoria = document.getElementById('filtroCategoria').value;
+            const filtroEstoque = document.getElementById('filtroEstoque').value;
 
             const pecasFiltradas = todasPecas.filter(peca => {
                 const nomeMatch = peca.nome.toLowerCase().includes(filtroNome);
                 const marcaMatch = !filtroMarca || peca.marca === filtroMarca;
                 const categoriaMatch = !filtroCategoria || peca.categoria === filtroCategoria;
-                
-                return nomeMatch && marcaMatch && categoriaMatch;
+                const estoqueMatch = !filtroEstoque ||
+                    (filtroEstoque === 'disponivel' && peca.estoque > 0) ||
+                    (filtroEstoque === 'esgotado'   && peca.estoque === 0);
+
+                return nomeMatch && marcaMatch && categoriaMatch && estoqueMatch;
             });
 
             exibirPecas(pecasFiltradas);
