@@ -64,8 +64,15 @@ function closeAllPopups() {
     _activeTrigger = null;
 }
 
-document.addEventListener('click', closeAllPopups);
-document.addEventListener('touchstart', closeAllPopups);
+document.addEventListener('click', function(e) {
+    if (_activePopup && _activePopup.contains(e.target)) return;
+    closeAllPopups();
+});
+document.addEventListener('touchstart', function(e) {
+    if (_activePopup && _activePopup.contains(e.target)) return;
+    if (_activeTrigger && _activeTrigger.contains(e.target)) return;
+    closeAllPopups();
+});
 
 function initCustomSelects() {
     // Target ALL selects on the page
@@ -110,6 +117,8 @@ function convertToCustomSelect(select) {
     // Popup — attached to body
     const popup = document.createElement('div');
     popup.className = 'custom-select-popup';
+    popup.addEventListener('touchstart', function(e) { e.stopPropagation(); });
+    popup.addEventListener('touchend', function(e) { e.stopPropagation(); });
     document.body.appendChild(popup);
 
     function updateTriggerText(t, s) {
@@ -133,6 +142,14 @@ function convertToCustomSelect(select) {
             item.textContent = opt.text;
 
             item.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                select.value = opt.value;
+                updateTriggerText(trigger, select);
+                closeAllPopups();
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            item.addEventListener('touchend', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 select.value = opt.value;
