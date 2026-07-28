@@ -1817,18 +1817,14 @@
             document.getElementById('sugestoesClientes').style.display = 'none';
         }
 
-        // Listener seguro para mobile: usa blur no iOS para garantir valor final
+        // Listener seguro para mobile (iOS e Android)
         (function() {
             const sel = document.getElementById('formaPagamento');
-            let ultimoValor = '';
-            function aplicar() {
-                if (sel.value !== ultimoValor) {
-                    ultimoValor = sel.value;
-                    mostrarOpcoesPagamento();
-                }
-            }
-            sel.addEventListener('change', aplicar);
-            sel.addEventListener('blur', aplicar);
+            let timer = null;
+            sel.addEventListener('change', function() {
+                clearTimeout(timer);
+                timer = setTimeout(mostrarOpcoesPagamento, 50);
+            });
         })();
 
     </script>
