@@ -2217,27 +2217,9 @@ Move Up Fit`;
             }
         }
         
-        // Fechar modais ao clicar no fundo escuro (overlay)
-        // Impede que cliques/toques dentro do conteudo do modal propaguem para o overlay
-        ['modalPagamento','modalResumoVendas','modalDarBaixa','modalEditarDevedor'].forEach(function(id) {
-            const modal = document.getElementById(id);
-            if (!modal) return;
-            // Impede propagacao de toques/cliques dentro do conteudo
-            const conteudo = modal.firstElementChild;
-            if (conteudo) {
-                conteudo.addEventListener('click', function(e) { e.stopPropagation(); });
-                conteudo.addEventListener('touchend', function(e) { e.stopPropagation(); });
-            }
-            // Fecha apenas se clicar no overlay (fundo escuro)
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    if (id === 'modalPagamento') fecharModalPagamento();
-                    else if (id === 'modalResumoVendas') fecharModalResumoVendas();
-                    else if (id === 'modalDarBaixa') fecharModalDarBaixa();
-                    else if (id === 'modalEditarDevedor') fecharModalEditarDevedor();
-                }
-            });
-        });
+        // Modais fecham apenas pelos botoes Cancelar (comportamento seguro para mobile)
+        // Remover fechamento por clique no overlay pois no Android o picker nativo
+        // dispara touchend fora do modal e fecha indevidamente
     
         let vendaEstornoCrediarioId = null;
 
