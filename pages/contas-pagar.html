@@ -308,7 +308,7 @@
                 <form id="formConta">
                     <div class="form-group">
                         <label for="fornecedor">Fornecedor:</label>
-                        <select id="fornecedor" name="fornecedor" required onchange="toggleOutroGasto()">
+                        <select id="fornecedor" name="fornecedor" required>
                             <option value="">Selecione...</option>
                             <option value="outros">Outros</option>
                         </select>
@@ -326,7 +326,7 @@
                     
                     <div class="form-group">
                         <label for="formaPagamento">Forma de Pagamento:</label>
-                        <select id="formaPagamento" name="formaPagamento" required onchange="toggleParcelas()">
+                        <select id="formaPagamento" name="formaPagamento" required>
                             <option value="">Selecione...</option>
                             <option value="dinheiro">Dinheiro</option>
                             <option value="cartao">Cartão</option>
@@ -335,7 +335,7 @@
                     
                     <div class="form-group" id="grupoVezes" style="display: none;">
                         <label for="quantidadeVezes">Quantidade de Vezes:</label>
-                        <select id="quantidadeVezes" name="quantidadeVezes" onchange="calcularParcela()">
+                        <select id="quantidadeVezes" name="quantidadeVezes">
                             <option value="1">1x</option>
                             <option value="2">2x</option>
                             <option value="3">3x</option>
@@ -501,6 +501,17 @@
 
         // Recalcular quando valor total mudar
         document.getElementById('valorTotal').addEventListener('input', calcularParcela);
+
+        // Listeners seguros para mobile (iOS e Android)
+        (function() {
+            function debounce(fn) {
+                let t;
+                return function() { clearTimeout(t); t = setTimeout(fn, 50); };
+            }
+            document.getElementById('fornecedor').addEventListener('change', debounce(toggleOutroGasto));
+            document.getElementById('formaPagamento').addEventListener('change', debounce(toggleParcelas));
+            document.getElementById('quantidadeVezes').addEventListener('change', debounce(calcularParcela));
+        })();
 
         // Submissão do formulário
         document.getElementById('formConta').addEventListener('submit', async function(e) {
