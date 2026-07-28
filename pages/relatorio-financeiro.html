@@ -1601,15 +1601,17 @@
             }
         }
         
-        // Mostrar/esconder opções de máquina
-        document.getElementById('formaPagamentoParcela').addEventListener('change', function() {
-            const opcoesMaquina = document.getElementById('opcoesMaquina');
-            if (this.value === 'debito') {
-                opcoesMaquina.style.display = 'block';
-            } else {
-                opcoesMaquina.style.display = 'none';
-            }
-        });
+        // Mostrar/esconder opções de máquina — debounce para mobile
+        (function() {
+            let t;
+            document.getElementById('formaPagamentoParcela').addEventListener('change', function() {
+                clearTimeout(t);
+                const val = this.value;
+                t = setTimeout(function() {
+                    document.getElementById('opcoesMaquina').style.display = val === 'debito' ? 'block' : 'none';
+                }, 50);
+            });
+        })();
         
         async function calcularValorEstoque() {
             try {
@@ -2215,27 +2217,18 @@ Move Up Fit`;
             }
         }
         
-        // Event listener para fechar modais ao clicar fora
+        // Fechar modais ao clicar fora — apenas em desktop (pointer: mouse)
+        // No mobile o toque propaga para o document e fecha o modal indevidamente
         document.addEventListener('click', function(event) {
+            if (event.pointerType === 'touch') return;
             const modalPagamento = document.getElementById('modalPagamento');
-            if (event.target === modalPagamento) {
-                fecharModalPagamento();
-            }
-            
+            if (event.target === modalPagamento) fecharModalPagamento();
             const modalResumo = document.getElementById('modalResumoVendas');
-            if (event.target === modalResumo) {
-                fecharModalResumoVendas();
-            }
-            
+            if (event.target === modalResumo) fecharModalResumoVendas();
             const modalBaixa = document.getElementById('modalDarBaixa');
-            if (event.target === modalBaixa) {
-                fecharModalDarBaixa();
-            }
-            
+            if (event.target === modalBaixa) fecharModalDarBaixa();
             const modalEditar = document.getElementById('modalEditarDevedor');
-            if (event.target === modalEditar) {
-                fecharModalEditarDevedor();
-            }
+            if (event.target === modalEditar) fecharModalEditarDevedor();
         });
     
         let vendaEstornoCrediarioId = null;
