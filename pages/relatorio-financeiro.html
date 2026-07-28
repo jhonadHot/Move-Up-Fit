@@ -2217,18 +2217,26 @@ Move Up Fit`;
             }
         }
         
-        // Fechar modais ao clicar fora — apenas em desktop (pointer: mouse)
-        // No mobile o toque propaga para o document e fecha o modal indevidamente
-        document.addEventListener('click', function(event) {
-            if (event.pointerType === 'touch') return;
-            const modalPagamento = document.getElementById('modalPagamento');
-            if (event.target === modalPagamento) fecharModalPagamento();
-            const modalResumo = document.getElementById('modalResumoVendas');
-            if (event.target === modalResumo) fecharModalResumoVendas();
-            const modalBaixa = document.getElementById('modalDarBaixa');
-            if (event.target === modalBaixa) fecharModalDarBaixa();
-            const modalEditar = document.getElementById('modalEditarDevedor');
-            if (event.target === modalEditar) fecharModalEditarDevedor();
+        // Fechar modais ao clicar no fundo escuro (overlay)
+        // Impede que cliques/toques dentro do conteudo do modal propaguem para o overlay
+        ['modalPagamento','modalResumoVendas','modalDarBaixa','modalEditarDevedor'].forEach(function(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            // Impede propagacao de toques/cliques dentro do conteudo
+            const conteudo = modal.firstElementChild;
+            if (conteudo) {
+                conteudo.addEventListener('click', function(e) { e.stopPropagation(); });
+                conteudo.addEventListener('touchend', function(e) { e.stopPropagation(); });
+            }
+            // Fecha apenas se clicar no overlay (fundo escuro)
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    if (id === 'modalPagamento') fecharModalPagamento();
+                    else if (id === 'modalResumoVendas') fecharModalResumoVendas();
+                    else if (id === 'modalDarBaixa') fecharModalDarBaixa();
+                    else if (id === 'modalEditarDevedor') fecharModalEditarDevedor();
+                }
+            });
         });
     
         let vendaEstornoCrediarioId = null;
