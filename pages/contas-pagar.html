@@ -61,6 +61,11 @@
             border-radius: 4px;
             border-left: 4px solid #ff4500;
             color: #f0f0f0;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .parcela-item:active {
+            opacity: 0.7;
         }
         
         .parcela-paga {
@@ -674,16 +679,14 @@
                     </div>
                     <div class="parcelas" id="parcelas-${index}">
                         ${conta.parcelas.map(parcela => `
-                            <div class="parcela-item ${parcela.paga ? 'parcela-paga' : ''}">
-                                <div>
-                                    <input type="checkbox" class="checkbox-parcela" 
-                                           ${parcela.paga ? 'checked' : ''} 
-                                           onchange="toggleParcela('${conta.id}', ${parcela.numero})">
+                            <div class="parcela-item ${parcela.paga ? 'parcela-paga' : ''}" onclick="toggleParcela('${conta.id}', ${parcela.numero})">
+                                <div style="display:flex;align-items:center;gap:0.6rem;">
+                                    <span style="font-size:1.1rem;">${parcela.paga ? '✅' : '⬜'}</span>
                                     Parcela ${parcela.numero}/${conta.quantidadeVezes}
+                                    ${parcela.paga ? `<small style="color:#4caf50;">Pago em: ${new Date(parcela.dataPagamento).toLocaleDateString('pt-BR')}</small>` : ''}
                                 </div>
-                                <div>
+                                <div style="font-weight:bold;">
                                     R$ ${parcela.valor.toFixed(2)}
-                                    ${parcela.paga ? `<br><small>Pago em: ${new Date(parcela.dataPagamento).toLocaleDateString('pt-BR')}</small>` : ''}
                                 </div>
                             </div>
                         `).join('')}
