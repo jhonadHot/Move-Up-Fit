@@ -60,6 +60,19 @@
             padding-top: 1rem;
             border-top: 2px solid #ff4500;
         }
+        #detalhesPeca {
+            border-color: rgba(255,255,255,0.08) !important;
+            background: rgba(255,255,255,0.03);
+            color: #f0f0f0;
+        }
+        @media (max-width: 768px) {
+            .venda-container {
+                flex-direction: column;
+            }
+            .main-content {
+                overflow-x: hidden;
+            }
+        }
     </style>
 </head>
 <body>
@@ -172,7 +185,7 @@
                 
                 <h3 style="margin-top: 2rem;">Selecionar</h3>
                 <div class="form-group">
-                    <select id="selectPeca" onchange="mostrarDetalhesPeca()" ontouchend="mostrarDetalhesPeca()">
+                    <select id="selectPeca" onchange="mostrarDetalhesPeca()">
                         <option value="">Selecione uma peça...</option>
                     </select>
                 </div>
@@ -660,6 +673,11 @@
                 quantidadeInput.max = pecaSelecionada.estoque;
                 quantidadeInput.value = 1;
                 detalhesPeca.style.display = 'block';
+
+                // Scroll suave para os detalhes no mobile
+                setTimeout(() => {
+                    detalhesPeca.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
             }
         }
 
