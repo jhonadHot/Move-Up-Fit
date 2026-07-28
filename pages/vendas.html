@@ -278,7 +278,7 @@
                     <!-- FORMA DE PAGAMENTO - SEGUNDO -->
                     <div class="form-group" style="margin-top: 1.5rem;">
                         <label for="formaPagamento">Forma de Pagamento:</label>
-                        <select id="formaPagamento" onchange="mostrarOpcoesPagamento()">
+                        <select id="formaPagamento">
                             <option value="">Selecione...</option>
                             <option value="credito">Cartão de Crédito</option>
                             <option value="debito">Cartão de Débito</option>
@@ -1816,6 +1816,20 @@
             document.getElementById('emailCliente').value = email;
             document.getElementById('sugestoesClientes').style.display = 'none';
         }
+
+        // Listener seguro para mobile: usa blur no iOS para garantir valor final
+        (function() {
+            const sel = document.getElementById('formaPagamento');
+            let ultimoValor = '';
+            function aplicar() {
+                if (sel.value !== ultimoValor) {
+                    ultimoValor = sel.value;
+                    mostrarOpcoesPagamento();
+                }
+            }
+            sel.addEventListener('change', aplicar);
+            sel.addEventListener('blur', aplicar);
+        })();
 
     </script>
 </body>
