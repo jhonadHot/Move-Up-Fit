@@ -52,6 +52,7 @@ window.addEventListener('load', function() {
 // Active popup reference
 let _activePopup = null;
 let _activeTrigger = null;
+let _justSelected = false;
 
 function closeAllPopups() {
     document.querySelectorAll('.custom-select-popup').forEach(function(p) {
@@ -69,10 +70,11 @@ document.addEventListener('click', function(e) {
     closeAllPopups();
 });
 document.addEventListener('touchstart', function(e) {
+    if (_justSelected) return;
     if (_activePopup && _activePopup.contains(e.target)) return;
     if (_activeTrigger && _activeTrigger.contains(e.target)) return;
     closeAllPopups();
-});
+}, { passive: true });
 
 function initCustomSelects() {
     // Target ALL selects on the page
@@ -152,10 +154,12 @@ function convertToCustomSelect(select) {
             item.addEventListener('touchend', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                _justSelected = true;
                 select.value = opt.value;
                 updateTriggerText(trigger, select);
                 closeAllPopups();
                 select.dispatchEvent(new Event('change', { bubbles: true }));
+                setTimeout(function() { _justSelected = false; }, 300);
             });
 
             popup.appendChild(item);
