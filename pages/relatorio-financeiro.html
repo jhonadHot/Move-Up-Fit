@@ -1261,8 +1261,8 @@
                 }
                 
                 return `
-                    <div class="pendencia-item" onclick="toggleParcelas(${index})">
-                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div class="pendencia-item">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; cursor: pointer;" onclick="toggleParcelas(${index})">
                             <div>
                                 <strong>${venda.cliente?.nome || 'Cliente não informado'}</strong><br>
                                 <small>${parcelas}x parcelas de R$ ${valorParcela.toFixed(2)} | Pago: R$ ${totalPago.toFixed(2)}</small><br>
